@@ -1,0 +1,423 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;background:#0e0d0c;color:#f2ede7;font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;}
+    a{color:#F1A252;text-decoration:none;} a:hover{color:#f7bd80;}
+    .dsp{font-family:'Bricolage Grotesque','Instrument Sans',system-ui,sans-serif;}
+    .mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;}
+    button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;}
+    .ghost:hover{background:#231f1c !important;border-color:#453c35 !important;}
+    .btn:hover{filter:brightness(1.09);}
+    .back:hover{color:#c9c1b9 !important;}
+    .sec:hover{background:#1a1716 !important;}
+    ::-webkit-scrollbar{width:9px;}
+    ::-webkit-scrollbar-thumb{background:#332d29;border-radius:99px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    @keyframes tick{0%{transform:scale(1);opacity:.35;}12%{transform:scale(1.9);opacity:1;}60%{transform:scale(1);opacity:.35;}100%{transform:scale(1);opacity:.35;}}
+    .tick{animation-name:tick;animation-iteration-count:infinite;animation-timing-function:ease-out;}
+    @keyframes fadein{from{opacity:0;}to{opacity:1;}}
+    .fadein{animation:fadein .2s ease both;}
+  </style>
+</helmet>
+
+<div style="width:1440px;height:1300px;{{shellStyle}}">
+
+  <sc-if value="{{showRail}}" hint-placeholder-val="{{true}}">
+    <aside style="width:232px;flex:0 0 232px;border-right:1px solid #201d1a;background:#121110;display:flex;flex-direction:column;padding:22px 14px 18px;gap:22px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:11px;padding:0 8px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3" fill="{{accent}}"></circle>
+          <path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.9"></path>
+          <path d="M12 8.2a3.8 3.8 0 0 1 3.8 3.8" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.5"></path>
+          <path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" stroke="#4b4340" stroke-width="1.6" stroke-linecap="round" opacity="0.45"></path>
+        </svg>
+        <div class="dsp" style="font-size:15px;font-weight:700;letter-spacing:-0.015em;">Static Bloom</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;padding-left:8px;">TONIGHT&#39;S SET</div>
+        <div style="display:flex;flex-direction:column;gap:1px;">
+          <sc-for list="{{setlist}}" as="s" hint-placeholder-count="8">
+            <div class="sec" style="{{s.style}}">
+              <span class="mono" style="{{s.numStyle}}">{{s.n}}</span>
+              <span style="{{s.titleStyle}}">{{s.title}}</span>
+              <sc-if value="{{s.current}}" hint-placeholder-val="{{true}}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color:{{accent}};flex:0 0 auto;"><path d="M8 5.2 19 12 8 18.8z"></path></svg>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="margin-top:auto;padding:0 8px;">
+        <div style="font-size:10.5px;color:#4f4842;line-height:1.6;">Up next<br><span style="color:#8d857c;font-size:12.5px;font-weight:500;">Half Past Nowhere</span></div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
+
+    <header style="{{headerStyle}}">
+      <sc-if value="{{showRail}}" hint-placeholder-val="{{true}}">
+        <button class="back" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6f665e;margin-bottom:13px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"></path></svg>
+          Rehearsal — August 29
+        </button>
+      </sc-if>
+
+      <div style="display:flex;align-items:flex-end;gap:22px;">
+        <div style="min-width:0;display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;align-items:center;gap:11px;">
+            <span class="mono" style="{{trackNumStyle}}">01</span>
+            <h1 class="dsp" style="{{titleStyle}}">Copper Line</h1>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#8d857c;">
+            <span>Static Bloom</span>
+            <span style="color:#3a332e;">·</span>
+            <span class="mono">4:12</span>
+            <span style="color:#3a332e;">·</span>
+            <span class="mono">4/4</span>
+          </div>
+        </div>
+
+        <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+          <div style="{{metaCardStyle}}">
+            <div style="font-size:9.5px;font-weight:600;letter-spacing:0.12em;color:#5d554e;">KEY</div>
+            <div class="mono" style="{{keyValueStyle}}">{{displayKey}}</div>
+          </div>
+          <div style="{{metaCardStyle}}">
+            <div style="font-size:9.5px;font-weight:600;letter-spacing:0.12em;color:#5d554e;">TEMPO</div>
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span class="tick" style="{{tickStyle}}"></span>
+              <span class="mono" style="{{metaValueStyle}}">96</span>
+            </div>
+          </div>
+          <div style="{{metaCardStyle}}">
+            <div style="font-size:9.5px;font-weight:600;letter-spacing:0.12em;color:#5d554e;">CAPO</div>
+            <div class="mono" style="{{metaValueStyle}}">{{capoText}}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:2px;background:#141211;border:1px solid #242020;border-radius:10px;padding:3px;">
+          <button class="ghost" onClick="{{transposeDown}}" aria-label="Transpose down" style="width:34px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#a39a91;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5.5 12h13"></path></svg>
+          </button>
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:62px;">
+            <span style="font-size:9px;font-weight:600;letter-spacing:0.1em;color:#5d554e;">TRANSPOSE</span>
+            <span class="mono" style="{{transposeValueStyle}}">{{transposeLabel}}</span>
+          </div>
+          <button class="ghost" onClick="{{transposeUp}}" aria-label="Transpose up" style="width:34px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#a39a91;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"></path></svg>
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:2px;background:#141211;border:1px solid #242020;border-radius:10px;padding:3px;">
+          <button class="ghost" onClick="{{sizeDown}}" aria-label="Smaller text" style="width:34px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#a39a91;font-size:12px;font-weight:600;">A</button>
+          <span style="width:1px;height:16px;background:#262220;"></span>
+          <button class="ghost" onClick="{{sizeUp}}" aria-label="Larger text" style="width:34px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#a39a91;font-size:17px;font-weight:600;">A</button>
+        </div>
+
+        <button class="ghost" onClick="{{toggleChords}}" style="{{chordToggleStyle}}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"></path></svg>
+          Chords
+        </button>
+
+        <button class="ghost" onClick="{{toggleStage}}" style="{{stageBtnStyle}}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15"></path></svg>
+          {{stageLabel}}
+        </button>
+
+        <div style="margin-left:auto;display:flex;align-items:center;gap:7px;">
+          <sc-for list="{{chordSet}}" as="c" hint-placeholder-count="7">
+            <span class="mono" style="{{c.style}}">{{c.name}}</span>
+          </sc-for>
+        </div>
+      </div>
+    </header>
+
+    <div style="flex:1;min-height:0;display:flex;overflow:hidden;">
+      <div style="{{lyricsPaneStyle}}">
+        <div style="{{lyricsInnerStyle}}">
+          <sc-for list="{{sections}}" as="sec" hint-placeholder-count="8">
+            <section style="{{sec.style}}">
+              <div style="{{sec.labelRowStyle}}">
+                <span style="{{sec.labelStyle}}">{{sec.label}}</span>
+                <span style="{{sec.barsStyle}}">{{sec.bars}}</span>
+              </div>
+              <sc-for list="{{sec.lines}}" as="ln" hint-placeholder-count="4">
+                <div style="{{ln.style}}">
+                  <sc-for list="{{ln.segs}}" as="g" hint-placeholder-count="3">
+                    <span style="display:inline-block;vertical-align:bottom;">
+                      <span style="{{g.chordStyle}}">{{g.chord}}</span>
+                      <span style="{{g.textStyle}}">{{g.text}}</span>
+                    </span>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </section>
+          </sc-for>
+
+          <div style="{{endStyle}}">
+            <span style="width:26px;height:1px;background:#2b2622;"></span>
+            <span class="mono" style="font-size:10.5px;letter-spacing:0.16em;color:#4f4842;">END</span>
+            <span style="width:26px;height:1px;background:#2b2622;"></span>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{showAside}}" hint-placeholder-val="{{true}}">
+        <aside style="width:296px;flex:0 0 296px;border-left:1px solid #1c1917;background:#111010;padding:24px 20px;display:flex;flex-direction:column;gap:24px;overflow-y:auto;">
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">STRUCTURE</div>
+            <div style="display:flex;flex-direction:column;gap:1px;">
+              <sc-for list="{{structure}}" as="p" hint-placeholder-count="8">
+                <div class="sec" style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;">
+                  <span style="{{p.dotStyle}}"></span>
+                  <span style="font-size:12.5px;color:#c9c1b9;flex:1;">{{p.label}}</span>
+                  <span class="mono" style="font-size:10.5px;color:#4f4842;">{{p.bars}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">BAND NOTE</div>
+            <div style="font-size:13px;color:#c9c1b9;line-height:1.65;background:#0f0e0d;border:1px solid #201d1a;border-left:2px solid {{accent}};border-radius:10px;padding:13px 14px;">Second chorus drops the kick — Dana carries it alone until the last two bars. Ori: keep the capo on, the open strings are the whole point.</div>
+            <div style="display:flex;align-items:center;gap:8px;padding-left:2px;">
+              <div style="width:22px;height:22px;border-radius:99px;background:#1c1917;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#8d857c;">O</div>
+              <span style="font-size:11px;color:#5d554e;">Ori · updated 2 days ago</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">RECORDING</div>
+            <div style="display:flex;align-items:center;gap:12px;background:#0f0e0d;border:1px solid #201d1a;border-radius:11px;padding:12px 13px;">
+              <button style="{{playSmallStyle}}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2 19 12 8 18.8z"></path></svg>
+              </button>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:500;color:#d9d2cb;">Room take · Aug 18</div>
+                <div style="display:flex;align-items:flex-end;gap:1.5px;height:16px;margin-top:5px;">
+                  <sc-for list="{{wave}}" as="b" hint-placeholder-count="40">
+                    <div style="{{b.style}}"></div>
+                  </sc-for>
+                </div>
+              </div>
+              <span class="mono" style="font-size:10.5px;color:#5d554e;">4:31</span>
+            </div>
+          </div>
+        </aside>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#F1A252","options":["#F1A252","#35C2C7","#E4705A","#9BC46A"],"section":"Theme"},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { steps: 0, scale: 1, stage: false, chords: true };
+  }
+
+  song() {
+    return [
+      { label: 'Intro', bars: '4 bars', lines: [
+        [ { c: 'D', t: '' }, { c: 'A', t: '' }, { c: 'Bm', t: '' }, { c: 'G', t: '' } ]
+      ] },
+      { label: 'Verse 1', bars: '8 bars', lines: [
+        [ { c: 'D', t: 'Six on the ' }, { c: 'A', t: 'copper line,' } ],
+        [ { c: 'Bm', t: 'counting the streetlights ' }, { c: 'G', t: 'home' } ],
+        [ { c: 'D', t: 'You said you’d wait ' }, { c: 'A', t: 'outside,' } ],
+        [ { c: 'Bm', t: 'I showed up on my ' }, { c: 'G', t: 'own' } ],
+        [ { c: 'D', t: 'Radio half a ' }, { c: 'A', t: 'station,' } ],
+        [ { c: 'Bm', t: 'half a song we ' }, { c: 'G', t: 'know' } ],
+        [ { c: 'D', t: 'Some things you carry ' }, { c: 'A', t: 'quiet,' } ],
+        [ { c: 'Bm', t: 'some things you let ' }, { c: 'G', t: 'go' } ]
+      ] },
+      { label: 'Pre-chorus', bars: '4 bars', lines: [
+        [ { c: 'Em', t: 'And the room is ' }, { c: 'A', t: 'louder' } ],
+        [ { c: 'Em', t: 'than it needs to ' }, { c: 'A/C#', t: 'be' } ]
+      ] },
+      { label: 'Chorus', bars: '8 bars', accent: true, lines: [
+        [ { c: 'G', t: 'Hold the note ' }, { c: 'D', t: 'till the room lets go' } ],
+        [ { c: 'A', t: 'we were never quiet, ' }, { c: 'Bm', t: 'we just learned to sing it low' } ],
+        [ { c: 'G', t: 'Hold the note ' }, { c: 'D', t: 'till the ceiling shakes' } ],
+        [ { c: 'A', t: 'everything worth keeping ' }, { c: 'Bm', t: 'is the part that breaks' } ]
+      ] },
+      { label: 'Verse 2', bars: '8 bars', lines: [
+        [ { c: 'D', t: 'Ori found the ending ' }, { c: 'A', t: 'somewhere around four' } ],
+        [ { c: 'Bm', t: 'Dana kept the bassline ' }, { c: 'G', t: 'walking out the door' } ],
+        [ { c: 'D', t: 'Tal was counting nothing, ' }, { c: 'A', t: 'just the way he does' } ],
+        [ { c: 'Bm', t: 'and none of us admitted ' }, { c: 'G', t: 'how good the quiet was' } ]
+      ] },
+      { label: 'Bridge', bars: '6 bars', lines: [
+        [ { c: 'F#m', t: 'One more time from the top,' } ],
+        [ { c: 'Em', t: 'one more time' } ],
+        [ { c: 'G', t: 'till the tape runs out ' }, { c: 'A', t: 'and the lights come up' } ]
+      ] },
+      { label: 'Chorus', bars: '×2', accent: true, lines: [
+        [ { c: 'G', t: 'Hold the note ' }, { c: 'D', t: 'till the room lets go' } ],
+        [ { c: 'A', t: 'we were never quiet, ' }, { c: 'Bm', t: 'we just learned to sing it low' } ]
+      ] },
+      { label: 'Outro', bars: 'fade', lines: [
+        [ { c: 'D', t: '' }, { c: 'A', t: '' }, { c: 'Bm', t: '' }, { c: 'G', t: '' } ]
+      ] }
+    ];
+  }
+
+  transposeChord(ch, steps) {
+    if (!ch) return '';
+    if (steps === 0) return ch;
+    const SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const FLATNAME = { 'C#':'Db', 'D#':'Eb', 'F#':'Gb', 'G#':'Ab', 'A#':'Bb' };
+    const ALIAS = { 'Db':'C#', 'Eb':'D#', 'Gb':'F#', 'Ab':'G#', 'Bb':'A#', 'Cb':'B', 'Fb':'E', 'E#':'F', 'B#':'C' };
+    const shift = (root) => {
+      const norm = ALIAS[root] || root;
+      let i = SHARP.indexOf(norm);
+      if (i < 0) return root;
+      i = (i + steps % 12 + 12) % 12;
+      const out = SHARP[i];
+      return (root.length > 1 && root.charAt(1) === 'b' && FLATNAME[out]) ? FLATNAME[out] : out;
+    };
+    return ch.split('/').map((part) => {
+      const m = /^([A-G][#b]?)(.*)$/.exec(part);
+      return m ? shift(m[1]) + m[2] : part;
+    }).join('/');
+  }
+
+  rgba(hex, a) {
+    const h = ('' + (hex || '#F1A252')).replace('#', '');
+    const n = h.length === 3 ? h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2) : h;
+    const r = parseInt(n.substr(0, 2), 16), g = parseInt(n.substr(2, 2), 16), b = parseInt(n.substr(4, 2), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(241,162,82,' + a + ')';
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  renderVals() {
+    const accent = this.props.accent || '#F1A252';
+    const A = (a) => this.rgba(accent, a);
+    const TEAL = '#35C2C7';
+    const st = this.state;
+    const stage = st.stage;
+    const sc = st.scale * (stage ? 1.3 : 1);
+    const showChords = st.chords;
+
+    const lyricSize = (20 * sc).toFixed(1);
+    const chordSize = (13.5 * sc).toFixed(1);
+    const lineGap = (12 * sc).toFixed(1);
+    const chordRow = showChords ? (18 * sc).toFixed(1) : '0';
+
+    const baseKey = 'D';
+    const dispKey = this.transposeChord(baseKey, st.steps);
+    const capo = 2 - st.steps;
+
+    const seen = [];
+    const sections = this.song().map((sec) => {
+      const lines = sec.lines.map((segs) => {
+        const isChordOnly = segs.every((g) => !g.t);
+        return {
+          style: 'margin:0 0 ' + (isChordOnly ? (lineGap * 0.6).toFixed(1) : lineGap) + 'px;',
+          segs: segs.map((g) => {
+            const ch = this.transposeChord(g.c, st.steps);
+            if (ch && seen.indexOf(ch) < 0) seen.push(ch);
+            return {
+              chord: showChords ? ch : '',
+              text: g.t ? g.t : '',
+              chordStyle: 'display:block;font-family:\'JetBrains Mono\',ui-monospace,monospace;font-size:' + (isChordOnly ? (chordSize * 1.25).toFixed(1) : chordSize) + 'px;font-weight:700;letter-spacing:-0.01em;color:' + accent + ';height:' + (isChordOnly ? (chordRow * 1.4).toFixed(1) : chordRow) + 'px;line-height:' + (isChordOnly ? (chordRow * 1.4).toFixed(1) : chordRow) + 'px;',
+              textStyle: 'display:block;white-space:pre;font-size:' + lyricSize + 'px;line-height:1.28;color:#ece6df;letter-spacing:-0.008em;'
+            };
+          })
+        };
+      });
+      return {
+        label: sec.label,
+        bars: sec.bars,
+        lines: lines,
+        style: (stage ? 'break-inside:avoid;-webkit-column-break-inside:avoid;' : '') + 'margin:0 0 ' + (30 * sc).toFixed(0) + 'px;padding-left:' + (stage ? 0 : 18) + 'px;border-left:' + (stage ? '0' : ('2px solid ' + (sec.accent ? '' + A(0.35) + '' : '#211d1b'))) + ';',
+        labelRowStyle: 'display:flex;align-items:center;gap:9px;margin-bottom:' + (12 * sc).toFixed(0) + 'px;',
+        labelStyle: 'font-size:' + (10.5 * Math.min(sc, 1.25)).toFixed(1) + 'px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:' + (sec.accent ? accent : '#6f665e') + ';',
+        barsStyle: 'font-family:\'JetBrains Mono\',monospace;font-size:' + (10 * Math.min(sc, 1.25)).toFixed(1) + 'px;color:#4f4842;'
+      };
+    });
+
+    const wave = [];
+    const seed = [4,9,6,13,8,15,11,7,17,12,6,14,19,10,7,13,22,16,9,5,12,18,14,8,11,20,15,7,10,16,12,6,9,14,18,11,7,12,8,5];
+    for (let i = 0; i < seed.length; i++) {
+      wave.push({ style: 'width:2px;border-radius:1px;height:' + seed[i] + 'px;background:' + (i < 14 ? accent : '#2b2622') + ';' });
+    }
+
+    const setlist = ['Copper Line','Half Past Nowhere','Room 12','Dreams','Ember & Ash','Northbound','Seven Nation Army','Static Bloom'];
+
+    return {
+      accent: accent,
+      shellStyle: 'display:flex;background:' + (stage ? '#0a0a09' : '#0e0d0c') + ';overflow:hidden;',
+      showRail: !stage,
+      showAside: !stage,
+      headerStyle: 'padding:' + (stage ? '18px 40px 16px' : '22px 34px 18px') + ';border-bottom:1px solid #1c1917;background:' + (stage ? '#0c0c0b' : '#111010') + ';flex:0 0 auto;',
+      titleStyle: 'margin:0;font-size:' + (stage ? 30 : 36) + 'px;font-weight:700;letter-spacing:-0.03em;line-height:1;',
+      trackNumStyle: 'font-size:' + (stage ? 14 : 16) + 'px;font-weight:400;color:#4f4842;',
+      metaCardStyle: 'display:flex;flex-direction:column;gap:4px;padding:9px 14px;border-radius:10px;background:#141211;border:1px solid #221f1c;min-width:76px;',
+      metaValueStyle: 'font-size:17px;font-weight:500;color:#f2ede7;',
+      keyValueStyle: 'font-size:17px;font-weight:600;color:' + TEAL + ';',
+      displayKey: dispKey,
+      capoText: capo === 0 ? 'None' : (capo > 0 ? '' + capo : '—'),
+      tickStyle: 'display:block;width:7px;height:7px;border-radius:99px;background:' + accent + ';animation-duration:0.625s;',
+      transposeLabel: st.steps === 0 ? 'Original' : (st.steps > 0 ? '+' + st.steps : '' + st.steps),
+      transposeValueStyle: 'font-size:13px;font-weight:600;color:' + (st.steps === 0 ? '#a39a91' : accent) + ';',
+      transposeUp: () => this.setState({ steps: Math.min(11, st.steps + 1) }),
+      transposeDown: () => this.setState({ steps: Math.max(-11, st.steps - 1) }),
+      sizeUp: () => this.setState({ scale: Math.min(1.75, +(st.scale + 0.12).toFixed(2)) }),
+      sizeDown: () => this.setState({ scale: Math.max(0.8, +(st.scale - 0.12).toFixed(2)) }),
+      toggleStage: () => this.setState({ stage: !st.stage }),
+      stageLabel: stage ? 'Exit stage' : 'Stage mode',
+      stageBtnStyle: 'height:36px;padding:0 13px;border-radius:10px;border:1px solid ' + (stage ? accent : '#242020') + ';background:' + (stage ? '' + A(0.10) + '' : '#141211') + ';color:' + (stage ? accent : '#a39a91') + ';font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:7px;',
+      toggleChords: () => this.setState({ chords: !st.chords }),
+      chordToggleStyle: 'height:36px;padding:0 13px;border-radius:10px;border:1px solid ' + (showChords ? '#3a332e' : '#242020') + ';background:#141211;color:' + (showChords ? '#e8e2db' : '#5d554e') + ';font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:7px;',
+      chordSet: seen.slice(0, 7).map((c) => ({
+        name: c,
+        style: 'font-size:11.5px;font-weight:600;color:' + accent + ';background:' + A(0.09) + ';border:1px solid ' + A(0.16) + ';padding:4px 9px;border-radius:6px;'
+      })),
+      lyricsPaneStyle: 'flex:1;min-width:0;overflow-y:auto;padding:' + (stage ? '34px 40px 90px' : '30px 34px 80px') + ';',
+      lyricsInnerStyle: 'max-width:' + (stage ? 1180 : 780) + 'px;margin:0 auto;' + (stage ? 'column-count:2;column-gap:64px;' : ''),
+      sections: sections,
+      endStyle: 'display:flex;align-items:center;justify-content:center;gap:12px;padding-top:10px;',
+      structure: [
+        { label: 'Intro', bars: '4' },
+        { label: 'Verse 1', bars: '8' },
+        { label: 'Pre-chorus', bars: '4' },
+        { label: 'Chorus', bars: '8', hot: true },
+        { label: 'Verse 2', bars: '8' },
+        { label: 'Bridge', bars: '6' },
+        { label: 'Chorus ×2', bars: '16', hot: true },
+        { label: 'Outro', bars: 'fade' }
+      ].map((p) => Object.assign({}, p, {
+        dotStyle: 'width:6px;height:6px;border-radius:99px;background:' + (p.hot ? accent : '#332d29') + ';'
+      })),
+      playSmallStyle: 'width:30px;height:30px;border-radius:99px;background:#221e1b;display:flex;align-items:center;justify-content:center;color:' + accent + ';flex:0 0 auto;',
+      wave: wave,
+      setlist: setlist.map((t, i) => ({
+        n: (i + 1) < 10 ? '0' + (i + 1) : '' + (i + 1),
+        title: t,
+        current: i === 0,
+        style: 'display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:8px;cursor:pointer;background:' + (i === 0 ? '' + A(0.09) + '' : 'transparent') + ';',
+        numStyle: 'font-size:10.5px;color:' + (i === 0 ? accent : '#4f4842') + ';width:16px;',
+        titleStyle: 'font-size:12.5px;font-weight:' + (i === 0 ? '600' : '400') + ';color:' + (i === 0 ? '#f2ede7' : '#8d857c') + ';flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

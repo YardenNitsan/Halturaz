@@ -1,0 +1,106 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "App"
+    },
+    {
+      "id": "page-2",
+      "name": "On stage"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "Calendar",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1",
+      "is_interactive": true
+    },
+    {
+      "file": "Rehearsal.dc.html",
+      "title": "Rehearsal · setlist",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1",
+      "is_interactive": true
+    },
+    {
+      "file": "Song.dc.html",
+      "title": "Song",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 1300,
+      "page": "page-1",
+      "is_interactive": true
+    },
+    {
+      "file": "Library.dc.html",
+      "title": "Songs library",
+      "x": 0,
+      "y": 1180,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1",
+      "is_interactive": true
+    },
+    {
+      "file": "MobileCalendar.dc.html",
+      "title": "Calendar",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2",
+      "is_interactive": true
+    },
+    {
+      "file": "MobileRehearsal.dc.html",
+      "title": "Rehearsal",
+      "x": 510,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2",
+      "is_interactive": true
+    },
+    {
+      "file": "MobileSong.dc.html",
+      "title": "Song · during rehearsal",
+      "x": 1020,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2",
+      "is_interactive": true
+    }
+  ],
+  "annotations": [
+    {
+      "id": "flow-desktop",
+      "x": 0,
+      "y": -330,
+      "w": 620,
+      "page": "page-1",
+      "text": "Static Bloom — rehearsal manager\n\nThe whole product is one path: Calendar → Rehearsal → Song. Two nav destinations only; rehearsals live inside the calendar, setlists inside rehearsals.\n\nEverything here is live: change months, pick a day, book a rehearsal, drag the setlist, transpose the song."
+    },
+    {
+      "id": "flow-mobile",
+      "x": 0,
+      "y": -190,
+      "w": 560,
+      "page": "page-2",
+      "text": "Phone — what you actually hold at rehearsal.\n\nThe song screen is the point: big lyrics, chords above the words, transpose and text size within thumb reach, next song always visible at the bottom."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

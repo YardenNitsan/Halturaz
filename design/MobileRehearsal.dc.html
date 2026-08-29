@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;background:#0e0d0c;color:#f2ede7;font-family:'Instrument Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+    a{color:#F1A252;text-decoration:none;} a:hover{color:#f7bd80;}
+    .dsp{font-family:'Bricolage Grotesque','Instrument Sans',system-ui,sans-serif;}
+    .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;}
+    button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;}
+    ::-webkit-scrollbar{width:0;}
+    .card:active{transform:scale(0.99);}
+    .card{transition:transform .1s ease,background .13s ease;}
+  </style>
+</helmet>
+
+<div style="width:390px;height:844px;display:flex;flex-direction:column;background:#0e0d0c;overflow:hidden;">
+
+  <header style="flex:0 0 auto;padding:16px 18px 16px;background:#111010;border-bottom:1px solid #1c1917;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button aria-label="Back" style="width:44px;height:44px;margin:-5px 0 -5px -12px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#8d857c;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"></path></svg>
+      </button>
+      <span style="{{badgeStyle}}">TONIGHT</span>
+      <button aria-label="More" style="margin:-5px -12px -5px auto;width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#6f665e;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+      </button>
+    </div>
+
+    <h1 class="dsp" style="margin:0 0 7px;font-size:29px;font-weight:700;letter-spacing:-0.03em;line-height:1.05;">Rehearsal<br>August 29</h1>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#a39a91;margin-bottom:15px;">
+      <span class="mono" style="color:#f2ede7;font-weight:500;">19:00</span>
+      <span style="color:#3a332e;">·</span>
+      <span>Studio 9</span>
+      <span style="color:#3a332e;">·</span>
+      <span class="mono">8 songs</span>
+      <span style="color:#3a332e;">·</span>
+      <span class="mono">39 min</span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:11px;">
+      <div style="flex:1;height:5px;border-radius:99px;background:#211d1b;overflow:hidden;">
+        <div style="{{progressStyle}}"></div>
+      </div>
+      <span style="font-size:11.5px;color:#6f665e;"><span class="mono" style="color:#f2ede7;font-weight:600;">{{doneCount}}</span>/8 done</span>
+    </div>
+  </header>
+
+  <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 14px 12px;">
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <sc-for list="{{rows}}" as="s" hint-placeholder-count="8">
+        <div class="card" style="{{s.style}}">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="mono" style="{{s.numStyle}}">{{s.n}}</span>
+            <div style="min-width:0;flex:1;">
+              <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+                <span style="{{s.titleStyle}}">{{s.title}}</span>
+                <sc-if value="{{s.isNew}}" hint-placeholder-val="{{true}}">
+                  <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#35C2C7;background:rgba(53,194,199,0.12);padding:2px 5px;border-radius:4px;flex:0 0 auto;">NEW</span>
+                </sc-if>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                <span class="mono" style="{{s.keyStyle}}">{{s.key}}</span>
+                <span class="mono" style="font-size:11px;color:#6f665e;">{{s.bpm}} bpm</span>
+                <span class="mono" style="font-size:11px;color:#4f4842;">{{s.dur}}</span>
+              </div>
+            </div>
+            <button onClick="{{s.toggle}}" aria-label="Mark reviewed" style="{{s.checkStyle}}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="{{s.tickStyle}}"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+            </button>
+          </div>
+          <sc-if value="{{s.hasNote}}" hint-placeholder-val="{{true}}">
+            <div style="{{s.noteStyle}}">{{s.note}}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex:0 0 auto;background:#111010;border-top:1px solid #1c1917;padding:11px 16px 18px;display:flex;align-items:center;gap:12px;">
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.11em;color:#5d554e;">STARTING WITH</div>
+      <div style="font-size:14.5px;font-weight:500;color:#e8e2db;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{firstTitle}}</div>
+    </div>
+    <button style="{{startBtnStyle}}">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2 19 12 8 18.8z"></path></svg>
+      Start
+    </button>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#F1A252","options":["#F1A252","#35C2C7","#E4705A","#9BC46A"],"section":"Theme"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      songs: [
+        { title: 'Copper Line', key: 'D', bpm: 96, dur: '4:12', done: true },
+        { title: 'Half Past Nowhere', key: 'Am', bpm: 84, dur: '5:24', done: true, note: 'Start on the ride, no count-in.' },
+        { title: 'Room 12', key: 'F#m', bpm: 112, dur: '3:48', done: false, isNew: true },
+        { title: 'Dreams', key: 'F', bpm: 120, dur: '4:17', done: true },
+        { title: 'Ember & Ash', key: 'Em', bpm: 76, dur: '7:10', done: false, note: 'New outro — hold 76 until bar 40.' },
+        { title: 'Northbound', key: 'G', bpm: 138, dur: '3:31', done: false },
+        { title: 'Seven Nation Army', key: 'Em', bpm: 124, dur: '3:52', done: false },
+        { title: 'Static Bloom', key: 'Bm', bpm: 92, dur: '6:25', done: false, isNew: true }
+      ]
+    };
+  }
+
+  rgba(hex, a) {
+    const h = ('' + (hex || '#F1A252')).replace('#', '');
+    const n = h.length === 3 ? h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2) : h;
+    const r = parseInt(n.substr(0, 2), 16), g = parseInt(n.substr(2, 2), 16), b = parseInt(n.substr(4, 2), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(241,162,82,' + a + ')';
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  renderVals() {
+    const accent = this.props.accent || '#F1A252';
+    const A = (a) => this.rgba(accent, a);
+    const TEAL = '#35C2C7';
+    const st = this.state;
+    const done = st.songs.filter((s) => s.done).length;
+
+    return {
+      accent: accent,
+      badgeStyle: 'font-size:9px;font-weight:700;letter-spacing:0.14em;padding:5px 9px;border-radius:6px;color:' + accent + ';background:' + A(0.12) + ';',
+      doneCount: '' + done,
+      progressStyle: 'height:100%;border-radius:99px;background:' + accent + ';width:' + Math.round((done / st.songs.length) * 100) + '%;transition:width .3s cubic-bezier(.2,.7,.3,1);',
+      firstTitle: st.songs.length ? st.songs[0].title : '—',
+      startBtnStyle: 'height:46px;padding:0 20px;border-radius:12px;background:' + accent + ';color:#17120c;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;flex:0 0 auto;',
+      rows: st.songs.map((s, i) => ({
+        n: (i + 1) < 10 ? '0' + (i + 1) : '' + (i + 1),
+        title: s.title,
+        key: s.key,
+        bpm: '' + s.bpm,
+        dur: s.dur,
+        isNew: !!s.isNew,
+        hasNote: !!s.note,
+        note: s.note || '',
+        style: 'display:flex;flex-direction:column;gap:9px;padding:13px 14px;border-radius:13px;background:' + (s.done ? '#131211' : '#171514') + ';border:1px solid ' + (s.done ? '#1c1917' : '#221f1c') + ';',
+        numStyle: 'font-size:12px;font-weight:500;color:' + (s.done ? '#4f4842' : '#8d857c') + ';width:18px;flex:0 0 auto;',
+        titleStyle: 'font-size:15.5px;font-weight:500;letter-spacing:-0.008em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (s.done ? '#8d857c' : '#f2ede7') + ';',
+        keyStyle: 'font-size:11px;font-weight:500;color:' + TEAL + ';background:rgba(53,194,199,0.10);padding:3px 7px;border-radius:5px;',
+        checkStyle: 'width:44px;height:44px;margin:-8px -6px -8px 0;border-radius:99px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:' + (s.done ? '#17120c' : '#332d29') + ';',
+        tickStyle: 'display:block;padding:6px;border-radius:99px;box-sizing:content-box;width:14px;height:14px;border:1.5px solid ' + (s.done ? accent : '#332d29') + ';background:' + (s.done ? accent : 'transparent') + ';color:' + (s.done ? '#17120c' : 'transparent') + ';',
+        toggle: () => {
+          const songs = st.songs.slice();
+          songs[i] = Object.assign({}, songs[i], { done: !songs[i].done });
+          this.setState({ songs: songs });
+        },
+        noteStyle: 'font-size:12.5px;color:#a2917a;line-height:1.5;padding-left:30px;border-left:2px solid ' + A(0.25) + ';margin-left:2px;'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;background:#0e0d0c;color:#f2ede7;font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;}
+    a{color:#F1A252;text-decoration:none;} a:hover{color:#f7bd80;}
+    .dsp{font-family:'Bricolage Grotesque','Instrument Sans',system-ui,sans-serif;}
+    .mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;}
+    button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;}
+    input{font-family:inherit;}
+    input:focus{outline:none;border-color:#453c35 !important;}
+    .nav:hover{background:#1c1917 !important;color:#f2ede7 !important;}
+    .ghost:hover{background:#231f1c !important;border-color:#453c35 !important;}
+    .lrow{transition:background .13s ease;}
+    .lrow:hover{background:#171514 !important;}
+    .lrow .go{opacity:0;transition:opacity .13s ease;}
+    .lrow:hover .go{opacity:1;}
+    ::-webkit-scrollbar{width:9px;}
+    ::-webkit-scrollbar-thumb{background:#332d29;border-radius:99px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+  </style>
+</helmet>
+
+<div style="width:1440px;height:900px;display:flex;background:#0e0d0c;overflow:hidden;">
+
+  <aside style="width:232px;flex:0 0 232px;border-right:1px solid #201d1a;background:#121110;display:flex;flex-direction:column;padding:22px 14px 18px;gap:26px;">
+    <div style="display:flex;align-items:center;gap:11px;padding:0 8px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="3" fill="{{accent}}"></circle>
+        <path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.9"></path>
+        <path d="M12 8.2a3.8 3.8 0 0 1 3.8 3.8" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.5"></path>
+        <path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" stroke="#4b4340" stroke-width="1.6" stroke-linecap="round" opacity="0.45"></path>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div class="dsp" style="font-size:15px;font-weight:700;letter-spacing:-0.015em;">Static Bloom</div>
+        <div style="font-size:10.5px;color:#6f665e;">5 members · Tel Aviv</div>
+      </div>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:3px;">
+      <div class="nav" style="display:flex;align-items:center;gap:11px;height:38px;padding:0 12px;border-radius:9px;color:#8d857c;font-size:13.5px;font-weight:500;cursor:pointer;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M3.5 9.6h17M8 3v4M16 3v4"></path></svg>
+        Calendar
+      </div>
+      <div style="{{navActiveStyle}}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="18" r="3"></circle><circle cx="18" cy="15.5" r="3"></circle><path d="M10 18V6.2l11-2.2v11.5"></path></svg>
+        Songs
+        <span class="mono" style="{{navCountStyle}}">{{total}}</span>
+      </div>
+    </nav>
+
+    <div style="display:flex;flex-direction:column;gap:6px;padding:0 4px;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;padding-left:8px;margin-bottom:3px;">COLLECTIONS</div>
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+        <button class="nav" onClick="{{g.pick}}" style="{{g.style}}">
+          <span>{{g.label}}</span>
+          <span class="mono" style="{{g.countStyle}}">{{g.count}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:auto;padding:0 8px;">
+      <div style="font-size:10.5px;color:#4f4842;line-height:1.6;">Library total<br><span class="mono" style="color:#8d857c;font-size:13px;">{{totalRuntime}}</span> of material</div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
+
+    <div style="padding:24px 34px 18px;border-bottom:1px solid #1c1917;background:#111010;">
+      <div style="display:flex;align-items:flex-end;gap:18px;">
+        <div>
+          <h1 class="dsp" style="margin:0 0 7px;font-size:34px;font-weight:700;letter-spacing:-0.028em;line-height:1;">Songs</h1>
+          <div style="font-size:13px;color:#8d857c;">{{shownCount}} of {{total}} · {{groupLabel}}</div>
+        </div>
+
+        <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+          <div style="position:relative;display:flex;align-items:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5d554e" stroke-width="2" stroke-linecap="round" style="position:absolute;left:11px;"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+            <input value="{{query}}" onChange="{{setQuery}}" placeholder="Search title, artist or key" style="height:36px;width:250px;padding:0 12px 0 32px;border-radius:9px;background:#141211;border:1px solid #242020;color:#e8e2db;font-size:12.5px;">
+          </div>
+          <button class="btn" style="{{addBtnStyle}}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"></path></svg>
+            New song
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:7px;margin-top:16px;">
+        <span style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#4f4842;margin-right:3px;">KEY</span>
+        <sc-for list="{{keyFilters}}" as="k" hint-placeholder-count="8">
+          <button class="ghost" onClick="{{k.pick}}" style="{{k.style}}">{{k.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:46px 1fr 64px 76px 62px 118px 34px;gap:14px;padding:14px 34px 9px;border-bottom:1px solid #1c1917;">
+      <div></div>
+      <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">TITLE</div>
+      <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">KEY</div>
+      <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">TEMPO</div>
+      <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;text-align:right;">TIME</div>
+      <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">LAST PLAYED</div>
+      <div></div>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:6px 20px 30px;">
+      <sc-for list="{{rows}}" as="s" hint-placeholder-count="14">
+        <div class="lrow" style="display:grid;grid-template-columns:46px 1fr 64px 76px 62px 118px 34px;gap:14px;align-items:center;padding:9px 14px;border-radius:11px;cursor:pointer;">
+          <div style="{{s.artStyle}}">
+            <span class="mono" style="{{s.artTextStyle}}">{{s.key}}</span>
+          </div>
+
+          <div style="min-width:0;display:flex;flex-direction:column;gap:2px;">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+              <span style="font-size:14.5px;font-weight:500;letter-spacing:-0.005em;color:#f2ede7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{s.title}}</span>
+              <sc-if value="{{s.needsWork}}" hint-placeholder-val="{{true}}">
+                <span style="font-size:8.5px;font-weight:700;letter-spacing:0.1em;color:#c79a5c;background:rgba(199,154,92,0.12);padding:2.5px 5px;border-radius:4px;flex:0 0 auto;">NEEDS WORK</span>
+              </sc-if>
+            </div>
+            <span style="font-size:11.5px;color:#6f665e;">{{s.artist}}</span>
+          </div>
+
+          <div><span class="mono" style="{{s.keyChipStyle}}">{{s.key}}</span></div>
+          <div class="mono" style="font-size:12px;color:#8d857c;">{{s.bpm}} <span style="color:#463f39;">bpm</span></div>
+          <div class="mono" style="font-size:12px;color:#6f665e;text-align:right;">{{s.dur}}</div>
+          <div style="font-size:12px;color:#6f665e;">{{s.last}}</div>
+          <div style="display:flex;justify-content:flex-end;">
+            <span class="go" style="{{s.goStyle}}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 6l6 6-6 6"></path></svg>
+            </span>
+          </div>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:13px;padding:90px 20px;text-align:center;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3f3833" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+          <div style="font-size:14px;color:#8d857c;">Nothing in the library matches that</div>
+          <button class="ghost" onClick="{{reset}}" style="height:34px;padding:0 14px;border-radius:9px;border:1px solid #292421;color:#a39a91;font-size:12.5px;">Reset filters</button>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#F1A252","options":["#F1A252","#35C2C7","#E4705A","#9BC46A"],"section":"Theme"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { query: '', group: 'all', key: 'All' };
+  }
+
+  songs() {
+    return [
+      { title: 'Copper Line', artist: 'Static Bloom', key: 'D', bpm: 96, dur: '4:12', sec: 252, last: 'Aug 29', own: true },
+      { title: 'Half Past Nowhere', artist: 'Static Bloom', key: 'Am', bpm: 84, dur: '5:24', sec: 324, last: 'Aug 29', own: true },
+      { title: 'Room 12', artist: 'Static Bloom', key: 'F#m', bpm: 112, dur: '3:48', sec: 228, last: 'Aug 22', own: true, needsWork: true },
+      { title: 'Ember & Ash', artist: 'Static Bloom', key: 'Em', bpm: 76, dur: '7:10', sec: 430, last: 'Aug 29', own: true, needsWork: true },
+      { title: 'Northbound', artist: 'Static Bloom', key: 'G', bpm: 138, dur: '3:31', sec: 211, last: 'Aug 29', own: true },
+      { title: 'Static Bloom', artist: 'Static Bloom', key: 'Bm', bpm: 92, dur: '6:25', sec: 385, last: 'Aug 22', own: true },
+      { title: 'Slow Signal', artist: 'Static Bloom', key: 'C', bpm: 104, dur: '4:05', sec: 245, last: 'Aug 18', own: true },
+      { title: 'Kite Weather', artist: 'Static Bloom', key: 'A', bpm: 132, dur: '3:22', sec: 202, last: 'Aug 11', own: true },
+      { title: 'Hollow Bones', artist: 'Static Bloom', key: 'Dm', bpm: 88, dur: '5:12', sec: 312, last: 'Jul 28', own: true },
+      { title: 'Talk Me Down', artist: 'Static Bloom', key: 'Bb', bpm: 118, dur: '4:40', sec: 280, last: 'Jul 21', own: true, needsWork: true },
+      { title: 'Marmara', artist: 'Static Bloom', key: 'Gm', bpm: 100, dur: '5:55', sec: 355, last: 'Jul 14', own: true },
+      { title: 'Dreams', artist: 'Fleetwood Mac', key: 'F', bpm: 120, dur: '4:17', sec: 257, last: 'Aug 29', own: false },
+      { title: 'Seven Nation Army', artist: 'The White Stripes', key: 'Em', bpm: 124, dur: '3:52', sec: 232, last: 'Aug 29', own: false },
+      { title: 'Come Together', artist: 'The Beatles', key: 'Dm', bpm: 82, dur: '4:20', sec: 260, last: 'Aug 18', own: false }
+    ];
+  }
+
+  rgba(hex, a) {
+    const h = ('' + (hex || '#F1A252')).replace('#', '');
+    const n = h.length === 3 ? h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2) : h;
+    const r = parseInt(n.substr(0, 2), 16), g = parseInt(n.substr(2, 2), 16), b = parseInt(n.substr(4, 2), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(241,162,82,' + a + ')';
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  renderVals() {
+    const accent = this.props.accent || '#F1A252';
+    const A = (a) => this.rgba(accent, a);
+    const TEAL = '#35C2C7';
+    const st = this.state;
+    const all = this.songs();
+    const q = st.query.trim().toLowerCase();
+
+    let rows = all.slice();
+    if (st.group === 'originals') rows = rows.filter((s) => s.own);
+    if (st.group === 'covers') rows = rows.filter((s) => !s.own);
+    if (st.group === 'work') rows = rows.filter((s) => s.needsWork);
+    if (st.key !== 'All') rows = rows.filter((s) => s.key === st.key);
+    if (q) rows = rows.filter((s) => (s.title + ' ' + s.artist + ' ' + s.key).toLowerCase().indexOf(q) >= 0);
+
+    const totalSec = all.reduce((a, s) => a + s.sec, 0);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.round((totalSec % 3600) / 60);
+
+    const groups = [
+      { id: 'all', label: 'All songs', count: all.length },
+      { id: 'originals', label: 'Originals', count: all.filter((s) => s.own).length },
+      { id: 'covers', label: 'Covers', count: all.filter((s) => !s.own).length },
+      { id: 'work', label: 'Needs work', count: all.filter((s) => s.needsWork).length }
+    ];
+    const groupLabel = (groups.filter((g) => g.id === st.group)[0] || groups[0]).label;
+
+    const keys = ['All','D','Am','Em','G','Bm','F#m','Dm'];
+
+    return {
+      accent: accent,
+      navActiveStyle: 'display:flex;align-items:center;gap:11px;height:38px;padding:0 12px;border-radius:9px;background:' + A(0.10) + ';color:' + accent + ';font-size:13.5px;font-weight:600;',
+      navCountStyle: 'margin-left:auto;font-size:10.5px;color:' + accent + ';',
+      total: '' + all.length,
+      shownCount: '' + rows.length,
+      groupLabel: groupLabel,
+      totalRuntime: h + 'h ' + m + 'm',
+      groups: groups.map((g) => Object.assign({}, g, {
+        count: '' + g.count,
+        style: 'display:flex;align-items:center;justify-content:space-between;height:34px;padding:0 12px;border-radius:8px;font-size:12.5px;font-weight:' + (st.group === g.id ? '600' : '400') + ';color:' + (st.group === g.id ? '#f2ede7' : '#8d857c') + ';background:' + (st.group === g.id ? '#1c1917' : 'transparent') + ';text-align:left;',
+        countStyle: 'font-size:10.5px;color:#5d554e;',
+        pick: () => this.setState({ group: g.id })
+      })),
+      keyFilters: keys.map((k) => ({
+        label: k,
+        style: 'height:28px;padding:0 11px;border-radius:7px;font-size:11.5px;font-weight:500;font-family:\'JetBrains Mono\',monospace;border:1px solid ' + (st.key === k ? TEAL : '#242020') + ';color:' + (st.key === k ? TEAL : '#8d857c') + ';background:' + (st.key === k ? 'rgba(53,194,199,0.09)' : 'transparent') + ';',
+        pick: () => this.setState({ key: k })
+      })),
+      rows: rows.map((s) => Object.assign({}, s, {
+        bpm: '' + s.bpm,
+        needsWork: !!s.needsWork,
+        artStyle: 'width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:' + (s.own ? '' + A(0.09) + '' : '#191615') + ';border:1px solid ' + (s.own ? '' + A(0.16) + '' : '#221f1c') + ';',
+        artTextStyle: 'font-size:12px;font-weight:700;letter-spacing:-0.02em;color:' + (s.own ? accent : '#6f665e') + ';',
+        keyChipStyle: 'font-size:11.5px;font-weight:500;color:' + TEAL + ';background:rgba(53,194,199,0.10);padding:3.5px 8px;border-radius:6px;',
+        goStyle: 'display:flex;color:' + accent + ';'
+      })),
+      isEmpty: rows.length === 0,
+      query: st.query,
+      setQuery: (e) => this.setState({ query: e.target.value }),
+      reset: () => this.setState({ query: '', group: 'all', key: 'All' }),
+      addBtnStyle: 'height:36px;padding:0 15px;border-radius:9px;background:' + accent + ';color:#17120c;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;'
+    };
+  }
+}
+</script>
+</body>
+</html>

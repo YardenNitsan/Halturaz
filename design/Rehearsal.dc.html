@@ -1,0 +1,483 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;background:#0e0d0c;color:#f2ede7;font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;}
+    a{color:#F1A252;text-decoration:none;} a:hover{color:#f7bd80;}
+    .dsp{font-family:'Bricolage Grotesque','Instrument Sans',system-ui,sans-serif;}
+    .mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;}
+    button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;}
+    input{font-family:inherit;}
+    .nav:hover{background:#1c1917 !important;color:#f2ede7 !important;}
+    .ghost:hover{background:#231f1c !important;border-color:#453c35 !important;}
+    .btn:hover{filter:brightness(1.09);}
+    .srow{transition:background .13s ease,border-color .13s ease;}
+    .srow:hover{background:#171514 !important;}
+    .srow .grip{opacity:0;transition:opacity .13s ease;}
+    .srow:hover .grip{opacity:1;}
+    .srow .kill{opacity:0;transition:opacity .13s ease,color .13s ease;}
+    .srow:hover .kill{opacity:1;}
+    .kill:hover{color:#E4705A !important;}
+    .check:hover{border-color:#6b6058 !important;}
+    .add:hover{background:#1c1917 !important;}
+    .back:hover{color:#c9c1b9 !important;}
+    ::-webkit-scrollbar{width:8px;}
+    ::-webkit-scrollbar-thumb{background:#332d29;border-radius:99px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    input:focus{outline:none;border-color:#453c35 !important;}
+    @keyframes slidein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+    .slidein{animation:slidein .2s cubic-bezier(.2,.7,.3,1) both;}
+    @keyframes toastin{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
+    .toast{animation:toastin .24s cubic-bezier(.2,.7,.3,1) both;}
+  </style>
+</helmet>
+
+<div style="width:1440px;height:900px;display:flex;background:#0e0d0c;overflow:hidden;position:relative;">
+
+  <aside style="width:232px;flex:0 0 232px;border-right:1px solid #201d1a;background:#121110;display:flex;flex-direction:column;padding:22px 14px 18px;gap:26px;">
+    <div style="display:flex;align-items:center;gap:11px;padding:0 8px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="3" fill="{{accent}}"></circle>
+        <path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.9"></path>
+        <path d="M12 8.2a3.8 3.8 0 0 1 3.8 3.8" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.5"></path>
+        <path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" stroke="#4b4340" stroke-width="1.6" stroke-linecap="round" opacity="0.45"></path>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div class="dsp" style="font-size:15px;font-weight:700;letter-spacing:-0.015em;">Static Bloom</div>
+        <div style="font-size:10.5px;color:#6f665e;">5 members · Tel Aviv</div>
+      </div>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:3px;">
+      <div class="nav" style="display:flex;align-items:center;gap:11px;height:38px;padding:0 12px;border-radius:9px;color:#8d857c;font-size:13.5px;font-weight:500;cursor:pointer;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M3.5 9.6h17M8 3v4M16 3v4"></path></svg>
+        Calendar
+      </div>
+      <div class="nav" style="display:flex;align-items:center;gap:11px;height:38px;padding:0 12px;border-radius:9px;color:#8d857c;font-size:13.5px;font-weight:500;cursor:pointer;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="18" r="3"></circle><circle cx="18" cy="15.5" r="3"></circle><path d="M10 18V6.2l11-2.2v11.5"></path></svg>
+        Songs
+        <span class="mono" style="margin-left:auto;font-size:10.5px;color:#5d554e;">14</span>
+      </div>
+    </nav>
+
+    <div style="display:flex;flex-direction:column;gap:9px;padding:0 4px;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;padding-left:8px;">UPCOMING</div>
+      <sc-for list="{{upcoming}}" as="u" hint-placeholder-count="3">
+        <div class="nav" style="{{u.style}}">
+          <span class="mono" style="{{u.dateStyle}}">{{u.date}}</span>
+          <div style="min-width:0;">
+            <div style="font-size:12.5px;font-weight:500;color:#c9c1b9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{u.label}}</div>
+            <div style="font-size:10.5px;color:#5d554e;margin-top:1px;">{{u.sub}}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:12px;padding:0 8px;">
+      <div style="display:flex;align-items:center;">
+        <sc-for list="{{members}}" as="m" hint-placeholder-count="5">
+          <div style="{{m.avatarStyle}}">{{m.initials}}</div>
+        </sc-for>
+      </div>
+      <div style="font-size:10.5px;color:#5d554e;">Maya, Ori, Dana, Tal, Noam</div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
+
+    <div style="padding:22px 34px 20px;border-bottom:1px solid #1c1917;background:#111010;">
+      <button class="back" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6f665e;margin-bottom:14px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"></path></svg>
+        August 2026
+      </button>
+
+      <div style="display:flex;align-items:flex-end;gap:20px;">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="{{badgeStyle}}">TONIGHT</span>
+            <span style="font-size:11.5px;color:#6f665e;">Saturday</span>
+          </div>
+          <h1 class="dsp" style="margin:0;font-size:38px;font-weight:700;letter-spacing:-0.03em;line-height:1;">Rehearsal — August 29</h1>
+          <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:#a39a91;">
+            <span class="mono" style="color:#f2ede7;font-weight:500;">19:00</span>
+            <span style="color:#3a332e;">·</span>
+            <span>Studio 9</span>
+            <span style="color:#3a332e;">·</span>
+            <span class="mono">{{count}} songs</span>
+            <span style="color:#3a332e;">·</span>
+            <span class="mono">~{{runtime}}</span>
+          </div>
+        </div>
+
+        <div style="margin-left:auto;display:flex;align-items:center;gap:20px;">
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;">
+            <div style="font-size:11px;color:#6f665e;"><span class="mono" style="color:#f2ede7;font-weight:600;">{{doneCount}}</span> of <span class="mono">{{count}}</span> reviewed</div>
+            <div style="width:150px;height:5px;border-radius:99px;background:#211d1b;overflow:hidden;">
+              <div style="{{progressStyle}}"></div>
+            </div>
+          </div>
+          <button class="btn" style="{{playBtnStyle}}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2 19 12 8 18.8z"></path></svg>
+            Start run-through
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:20px 34px 0;">
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <h2 class="dsp" style="margin:0;font-size:16px;font-weight:600;letter-spacing:-0.01em;">Setlist</h2>
+        <span style="font-size:11px;color:#4f4842;">drag to reorder</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+          <div style="position:relative;display:flex;align-items:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5d554e" stroke-width="2" stroke-linecap="round" style="position:absolute;left:11px;"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+            <input value="{{query}}" onChange="{{setQuery}}" placeholder="Filter songs" style="height:34px;width:200px;padding:0 12px 0 32px;border-radius:9px;background:#141211;border:1px solid #242020;color:#e8e2db;font-size:12.5px;">
+          </div>
+          <button class="ghost" onClick="{{toggleAdd}}" style="height:34px;padding:0 13px;border-radius:9px;border:1px solid #292421;color:#c9c1b9;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"></path></svg>
+            Add song
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:38px 1fr 62px 74px 58px 40px;gap:12px;padding:0 12px 8px;border-bottom:1px solid #1c1917;">
+        <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">#</div>
+        <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">TITLE</div>
+        <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">KEY</div>
+        <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;">TEMPO</div>
+        <div style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;color:#4f4842;text-align:right;">TIME</div>
+        <div></div>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:6px 0 24px;">
+        <sc-for list="{{rows}}" as="s" hint-placeholder-count="8">
+          <div class="srow" draggable="true" onDragStart="{{s.onDragStart}}" onDragOver="{{s.onDragOver}}" onDrop="{{s.onDrop}}" onDragEnd="{{s.onDragEnd}}" style="{{s.style}}">
+            <div style="display:flex;align-items:center;gap:2px;">
+              <span class="grip" style="display:flex;color:#4f4842;cursor:grab;margin-left:-4px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"></circle><circle cx="15" cy="6" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="9" cy="18" r="1.5"></circle><circle cx="15" cy="18" r="1.5"></circle></svg>
+              </span>
+              <span class="mono" style="{{s.numStyle}}">{{s.n}}</span>
+            </div>
+
+            <div style="min-width:0;display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                <span style="{{s.titleStyle}}">{{s.title}}</span>
+                <sc-if value="{{s.isNew}}" hint-placeholder-val="{{true}}">
+                  <span style="font-size:8.5px;font-weight:700;letter-spacing:0.1em;color:#35C2C7;background:rgba(53,194,199,0.12);padding:2.5px 5px;border-radius:4px;flex:0 0 auto;">NEW</span>
+                </sc-if>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+                <span style="font-size:11.5px;color:#6f665e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{s.artist}}</span>
+                <sc-if value="{{s.hasNote}}" hint-placeholder-val="{{true}}">
+                  <span style="font-size:11.5px;color:#7d6a52;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">— {{s.note}}</span>
+                </sc-if>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;"><span class="mono" style="{{s.keyStyle}}">{{s.key}}</span></div>
+
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="{{s.beatStyle}}"></span>
+              <span class="mono" style="font-size:12px;color:#8d857c;">{{s.bpm}}</span>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:flex-end;"><span class="mono" style="font-size:12px;color:#6f665e;">{{s.dur}}</span></div>
+
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;">
+              <button class="kill" onClick="{{s.remove}}" aria-label="Remove" style="width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#4f4842;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+              </button>
+              <button class="check" onClick="{{s.toggle}}" aria-label="Mark reviewed" style="{{s.checkStyle}}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="{{s.tickStyle}}"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+              </button>
+            </div>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{setEmpty}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:13px;padding:70px 20px;text-align:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#3f3833" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="18" r="3"></circle><circle cx="18" cy="15.5" r="3"></circle><path d="M10 18V6.2l11-2.2v11.5"></path></svg>
+            <div style="font-size:13.5px;color:#8d857c;line-height:1.55;max-width:260px;">The setlist is empty. Pull something in from the library and the running time fills itself in.</div>
+            <button class="ghost" onClick="{{openAdd}}" style="height:34px;padding:0 14px;border-radius:9px;border:1px solid #292421;color:#a39a91;font-size:12.5px;">Add song</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:70px 20px;text-align:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#3f3833" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+            <div style="font-size:13.5px;color:#8d857c;">No song matches &ldquo;{{query}}&rdquo;</div>
+            <button class="ghost" onClick="{{clearQuery}}" style="height:32px;padding:0 13px;border-radius:8px;border:1px solid #292421;color:#a39a91;font-size:12.5px;">Clear filter</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{addOpen}}" hint-placeholder-val="{{false}}">
+    <aside class="slidein" style="width:326px;flex:0 0 326px;border-left:1px solid #201d1a;background:#121110;display:flex;flex-direction:column;padding:22px 20px;gap:16px;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">ADD FROM LIBRARY</div>
+        <button class="ghost" onClick="{{toggleAdd}}" aria-label="Close" style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#6f665e;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <sc-for list="{{library}}" as="l" hint-placeholder-count="6">
+          <button class="add" onClick="{{l.add}}" style="display:flex;align-items:center;gap:11px;padding:10px 10px;border-radius:9px;text-align:left;">
+            <div style="min-width:0;flex:1;">
+              <div style="font-size:13px;font-weight:500;color:#e8e2db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{l.title}}</div>
+              <div style="font-size:10.5px;color:#6f665e;margin-top:1px;">{{l.artist}} · {{l.key}} · {{l.bpm}} BPM</div>
+            </div>
+            <span style="{{l.plusStyle}}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"></path></svg>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{libEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="font-size:12.5px;color:#5d554e;text-align:center;padding:30px 10px;line-height:1.55;">Every song in the library is already in tonight&#39;s setlist.</div>
+      </sc-if>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{notesOpen}}" hint-placeholder-val="{{true}}">
+    <aside style="width:326px;flex:0 0 326px;border-left:1px solid #201d1a;background:#121110;display:flex;flex-direction:column;padding:22px 20px;gap:22px;overflow-y:auto;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">NOTE FOR TONIGHT</div>
+        <div style="font-size:13.5px;color:#c9c1b9;line-height:1.6;background:#0f0e0d;border:1px solid #201d1a;border-left:2px solid {{accent}};border-radius:10px;padding:13px 14px;">Levontin set is in 7 days. Run the whole thing twice, no stopping. Tal — the new outro on <em style="color:#f2ede7;font-style:normal;font-weight:500;">Ember &amp; Ash</em> stays at 76 until bar 40.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:11px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">WHO&#39;S COMING</div>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <sc-for list="{{attendance}}" as="a" hint-placeholder-count="5">
+            <div style="display:flex;align-items:center;gap:11px;padding:7px 4px;">
+              <div style="{{a.avatarStyle}}">{{a.initials}}</div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:12.5px;font-weight:500;color:#d9d2cb;">{{a.name}}</div>
+                <div style="font-size:10.5px;color:#5d554e;">{{a.role}}</div>
+              </div>
+              <span style="{{a.statusStyle}}">{{a.status}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:11px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">KEYS IN THIS SET</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <sc-for list="{{keyTally}}" as="k" hint-placeholder-count="7">
+            <span style="{{k.style}}">{{k.label}}</span>
+          </sc-for>
+        </div>
+        <div style="font-size:11.5px;color:#5d554e;line-height:1.55;">Em shows up twice and Bm closes the set — worth spacing the dark keys out.</div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+    <div class="toast" style="position:absolute;left:50%;bottom:28px;display:flex;align-items:center;gap:11px;background:#1f1c1a;border:1px solid #322c28;border-radius:11px;padding:11px 16px;box-shadow:0 12px 34px rgba(0,0,0,0.5);">
+      <span style="{{toastDotStyle}}"></span>
+      <span style="font-size:13px;color:#e8e2db;">{{toastText}}</span>
+      <button onClick="{{undo}}" style="font-size:12.5px;font-weight:600;color:{{accent}};margin-left:4px;">Undo</button>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#F1A252","options":["#F1A252","#35C2C7","#E4705A","#9BC46A"],"section":"Theme"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      songs: [
+        { id: 'copper', title: 'Copper Line', artist: 'Static Bloom', key: 'D', bpm: 96, dur: '4:12', sec: 252, done: true },
+        { id: 'halfpast', title: 'Half Past Nowhere', artist: 'Static Bloom', key: 'Am', bpm: 84, dur: '5:24', sec: 324, done: true, note: 'start on the ride' },
+        { id: 'room12', title: 'Room 12', artist: 'Static Bloom', key: 'F#m', bpm: 112, dur: '3:48', sec: 228, done: false, isNew: true },
+        { id: 'dreams', title: 'Dreams', artist: 'Fleetwood Mac', key: 'F', bpm: 120, dur: '4:17', sec: 257, done: true },
+        { id: 'ember', title: 'Ember & Ash', artist: 'Static Bloom', key: 'Em', bpm: 76, dur: '7:10', sec: 430, done: false, note: 'new outro, bar 40' },
+        { id: 'north', title: 'Northbound', artist: 'Static Bloom', key: 'G', bpm: 138, dur: '3:31', sec: 211, done: false },
+        { id: 'seven', title: 'Seven Nation Army', artist: 'The White Stripes', key: 'Em', bpm: 124, dur: '3:52', sec: 232, done: false },
+        { id: 'static', title: 'Static Bloom', artist: 'Static Bloom', key: 'Bm', bpm: 92, dur: '6:25', sec: 385, done: false, isNew: true }
+      ],
+      pool: [
+        { id: 'slow', title: 'Slow Signal', artist: 'Static Bloom', key: 'C', bpm: 104, dur: '4:05', sec: 245 },
+        { id: 'kite', title: 'Kite Weather', artist: 'Static Bloom', key: 'A', bpm: 132, dur: '3:22', sec: 202 },
+        { id: 'hollow', title: 'Hollow Bones', artist: 'Static Bloom', key: 'Dm', bpm: 88, dur: '5:12', sec: 312 },
+        { id: 'talk', title: 'Talk Me Down', artist: 'Static Bloom', key: 'Bb', bpm: 118, dur: '4:40', sec: 280 },
+        { id: 'marmara', title: 'Marmara', artist: 'Static Bloom', key: 'Gm', bpm: 100, dur: '5:55', sec: 355 },
+        { id: 'together', title: 'Come Together', artist: 'The Beatles', key: 'Dm', bpm: 82, dur: '4:20', sec: 260 }
+      ],
+      query: '',
+      addOpen: false,
+      drag: null,
+      over: null,
+      toast: null,
+      undoState: null
+    };
+  }
+
+  componentWillUnmount() { if (this._t) clearTimeout(this._t); }
+
+  flash(text, prev) {
+    if (this._t) clearTimeout(this._t);
+    this.setState({ toast: text, undoState: prev });
+    this._t = setTimeout(() => this.setState({ toast: null, undoState: null }), 4200);
+  }
+
+  rgba(hex, a) {
+    const h = ('' + (hex || '#F1A252')).replace('#', '');
+    const n = h.length === 3 ? h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2) : h;
+    const r = parseInt(n.substr(0, 2), 16), g = parseInt(n.substr(2, 2), 16), b = parseInt(n.substr(4, 2), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(241,162,82,' + a + ')';
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  renderVals() {
+    const accent = this.props.accent || '#F1A252';
+    const A = (a) => this.rgba(accent, a);
+    const TEAL = '#35C2C7';
+    const st = this.state;
+    const q = st.query.trim().toLowerCase();
+
+    const total = st.songs.reduce((a, s) => a + s.sec, 0);
+    const mins = Math.round(total / 60);
+    const done = st.songs.filter((s) => s.done).length;
+
+    const visible = st.songs.map((s, i) => Object.assign({}, s, { idx: i }))
+      .filter((s) => !q || (s.title + ' ' + s.artist + ' ' + s.key).toLowerCase().indexOf(q) >= 0);
+
+    const rows = visible.map((s) => {
+      const isDragging = st.drag === s.idx;
+      const isOver = st.over === s.idx && st.drag !== null && st.drag !== s.idx;
+      return {
+        n: (s.idx + 1) < 10 ? '0' + (s.idx + 1) : '' + (s.idx + 1),
+        title: s.title,
+        artist: s.artist,
+        key: s.key,
+        bpm: '' + s.bpm,
+        dur: s.dur,
+        isNew: !!s.isNew,
+        hasNote: !!s.note,
+        note: s.note || '',
+        style: 'display:grid;grid-template-columns:38px 1fr 62px 74px 58px 40px;gap:12px;align-items:center;padding:11px 12px;border-radius:11px;cursor:default;background:'
+          + (isOver ? '' + A(0.06) + '' : 'transparent')
+          + ';border-top:1.5px solid ' + (isOver ? accent : 'transparent')
+          + ';opacity:' + (isDragging ? 0.35 : 1) + ';',
+        numStyle: 'font-size:12.5px;font-weight:500;color:' + (s.done ? '#4f4842' : '#8d857c') + ';width:20px;text-align:right;',
+        titleStyle: 'font-size:14.5px;font-weight:500;letter-spacing:-0.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (s.done ? '#8d857c' : '#f2ede7') + ';',
+        keyStyle: 'font-size:11.5px;font-weight:500;color:' + TEAL + ';background:rgba(53,194,199,0.10);padding:3.5px 8px;border-radius:6px;',
+        beatStyle: 'width:5px;height:5px;border-radius:99px;background:#3a332e;',
+        checkStyle: 'width:24px;height:24px;border-radius:99px;display:flex;align-items:center;justify-content:center;border:1.5px solid ' + (s.done ? accent : '#332d29') + ';background:' + (s.done ? accent : 'transparent') + ';color:#17120c;',
+        tickStyle: 'opacity:' + (s.done ? 1 : 0) + ';',
+        toggle: () => {
+          const songs = st.songs.slice();
+          songs[s.idx] = Object.assign({}, songs[s.idx], { done: !songs[s.idx].done });
+          this.setState({ songs: songs });
+        },
+        remove: () => {
+          const prev = st.songs.slice();
+          const songs = st.songs.slice();
+          const removed = songs.splice(s.idx, 1)[0];
+          const pool = st.pool.concat([{ id: removed.id, title: removed.title, artist: removed.artist, key: removed.key, bpm: removed.bpm, dur: removed.dur, sec: removed.sec }]);
+          this.setState({ songs: songs, pool: pool });
+          this.flash('Removed ' + removed.title, { songs: prev, pool: st.pool });
+        },
+        onDragStart: (e) => { if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', '' + s.idx); } catch (err) {} } this.setState({ drag: s.idx }); },
+        onDragOver: (e) => { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; if (st.over !== s.idx) this.setState({ over: s.idx }); },
+        onDrop: (e) => {
+          e.preventDefault();
+          const from = st.drag;
+          if (from === null || from === s.idx) { this.setState({ drag: null, over: null }); return; }
+          const songs = st.songs.slice();
+          const moved = songs.splice(from, 1)[0];
+          songs.splice(from < s.idx ? s.idx - 1 : s.idx, 0, moved);
+          this.setState({ songs: songs, drag: null, over: null });
+        },
+        onDragEnd: () => this.setState({ drag: null, over: null })
+      };
+    });
+
+    const tally = {};
+    st.songs.forEach((s) => { tally[s.key] = (tally[s.key] || 0) + 1; });
+
+    return {
+      accent: accent,
+      members: [
+        { initials: 'M' }, { initials: 'O' }, { initials: 'D' }, { initials: 'T' }, { initials: 'N' }
+      ].map((m, i) => Object.assign({}, m, {
+        avatarStyle: 'width:28px;height:28px;border-radius:99px;background:#221e1b;border:1.5px solid #121110;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#8d857c;margin-left:' + (i === 0 ? '0' : '-8px') + ';'
+      })),
+      upcoming: [
+        { date: 'SEP 01', label: 'Rehearsal', sub: '20:00 · Room B' },
+        { date: 'SEP 05', label: 'Levontin 7', sub: '21:30 · Show', show: true },
+        { date: 'SEP 08', label: 'Rehearsal', sub: '20:00 · Studio 9' }
+      ].map((u) => Object.assign({}, u, {
+        style: 'display:flex;align-items:center;gap:11px;padding:8px 8px;border-radius:9px;cursor:pointer;',
+        dateStyle: 'font-size:10px;font-weight:600;letter-spacing:0.04em;color:' + (u.show ? TEAL : '#6f665e') + ';width:42px;line-height:1.3;'
+      })),
+      count: '' + st.songs.length,
+      runtime: mins + ' min',
+      doneCount: '' + done,
+      progressStyle: 'height:100%;border-radius:99px;background:' + accent + ';width:' + (st.songs.length ? Math.round((done / st.songs.length) * 100) : 0) + '%;transition:width .3s cubic-bezier(.2,.7,.3,1);',
+      badgeStyle: 'font-size:9.5px;font-weight:700;letter-spacing:0.14em;padding:5px 9px;border-radius:6px;color:' + accent + ';background:' + A(0.12) + ';',
+      playBtnStyle: 'height:40px;padding:0 18px;border-radius:10px;background:' + accent + ';color:#17120c;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;',
+      rows: rows,
+      isEmpty: rows.length === 0 && !!q,
+      setEmpty: st.songs.length === 0,
+      openAdd: () => this.setState({ addOpen: true }),
+      query: st.query,
+      setQuery: (e) => this.setState({ query: e.target.value }),
+      clearQuery: () => this.setState({ query: '' }),
+      addOpen: st.addOpen,
+      notesOpen: !st.addOpen,
+      toggleAdd: () => this.setState({ addOpen: !st.addOpen }),
+      libEmpty: st.pool.length === 0,
+      library: st.pool.map((l, i) => Object.assign({}, l, {
+        bpm: '' + l.bpm,
+        plusStyle: 'width:26px;height:26px;border-radius:99px;border:1px solid #2b2622;display:flex;align-items:center;justify-content:center;color:' + accent + ';flex:0 0 auto;',
+        add: () => {
+          const prev = st.songs.slice();
+          const pool = st.pool.slice();
+          const picked = pool.splice(i, 1)[0];
+          this.setState({ songs: st.songs.concat([Object.assign({}, picked, { done: false, isNew: true })]), pool: pool });
+          this.flash('Added ' + picked.title + ' to the set', { songs: prev, pool: st.pool });
+        }
+      })),
+      keyTally: Object.keys(tally).map((k) => ({
+        label: k + ' ×' + tally[k],
+        style: 'font-family:\'JetBrains Mono\',monospace;font-size:11px;color:' + (tally[k] > 1 ? TEAL : '#8d857c') + ';background:' + (tally[k] > 1 ? 'rgba(53,194,199,0.10)' : '#1a1716') + ';padding:4px 8px;border-radius:6px;'
+      })),
+      attendance: [
+        { initials: 'M', name: 'Maya', role: 'Vocals', status: 'In' },
+        { initials: 'O', name: 'Ori', role: 'Guitar', status: 'In' },
+        { initials: 'D', name: 'Dana', role: 'Bass', status: 'In' },
+        { initials: 'T', name: 'Tal', role: 'Drums', status: 'Late' },
+        { initials: 'N', name: 'Noam', role: 'Keys', status: 'In' }
+      ].map((a) => Object.assign({}, a, {
+        avatarStyle: 'width:30px;height:30px;border-radius:99px;background:#1c1917;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;color:#8d857c;flex:0 0 auto;',
+        statusStyle: 'font-size:10.5px;font-weight:600;letter-spacing:0.04em;padding:3px 8px;border-radius:5px;color:' + (a.status === 'In' ? '#9BC46A' : '#c79a5c') + ';background:' + (a.status === 'In' ? 'rgba(155,196,106,0.10)' : 'rgba(199,154,92,0.10)') + ';'
+      })),
+      toast: !!st.toast,
+      toastText: st.toast || '',
+      toastDotStyle: 'width:7px;height:7px;border-radius:99px;background:' + accent + ';',
+      undo: () => {
+        if (st.undoState) this.setState({ songs: st.undoState.songs, pool: st.undoState.pool, toast: null, undoState: null });
+        else this.setState({ toast: null });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+smoke/dist/
+*.local
+.DS_Store
+.env
+.env.*
+npm-debug.log*
+yarn-error.log*
+
+# Generated design canvas bundle (2.6 MB); reseed it from design/ instead.
+rehearsal-manager.html

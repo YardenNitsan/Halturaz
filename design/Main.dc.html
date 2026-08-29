@@ -1,0 +1,509 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;background:#0e0d0c;color:#f2ede7;font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;}
+    a{color:#F1A252;text-decoration:none;} a:hover{color:#f7bd80;}
+    .dsp{font-family:'Bricolage Grotesque','Instrument Sans',system-ui,sans-serif;}
+    .mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;}
+    button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;}
+    input,textarea{font-family:inherit;}
+    .cell{transition:background .15s ease,border-color .15s ease;}
+    .cell:hover{border-color:#453c35 !important;}
+    .nav:hover{background:#1c1917 !important;color:#f2ede7 !important;}
+    .row:hover{background:#1c1917 !important;}
+    .btn:hover{filter:brightness(1.09);}
+    .ghost:hover{background:#231f1c !important;border-color:#453c35 !important;}
+    .chip:hover{border-color:#5a4f45 !important;}
+    ::-webkit-scrollbar{width:8px;height:8px;}
+    ::-webkit-scrollbar-thumb{background:#332d29;border-radius:99px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+    .pulse{animation:pulse 2.6s ease-in-out infinite;}
+    @keyframes slidein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+    .slidein{animation:slidein .22s cubic-bezier(.2,.7,.3,1) both;}
+    @keyframes toastin{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
+    .toast{animation:toastin .24s cubic-bezier(.2,.7,.3,1) both;}
+    input:focus,textarea:focus{outline:none;border-color:#5a4f45 !important;}
+  </style>
+</helmet>
+
+<div style="width:1440px;height:900px;display:flex;background:#0e0d0c;overflow:hidden;position:relative;">
+
+  <aside style="width:232px;flex:0 0 232px;border-right:1px solid #201d1a;background:#121110;display:flex;flex-direction:column;padding:22px 14px 18px;gap:26px;">
+    <div style="display:flex;align-items:center;gap:11px;padding:0 8px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="3" fill="{{accent}}"></circle>
+        <path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.9"></path>
+        <path d="M12 8.2a3.8 3.8 0 0 1 3.8 3.8" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" opacity="0.5"></path>
+        <path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" stroke="#4b4340" stroke-width="1.6" stroke-linecap="round" opacity="0.45"></path>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div class="dsp" style="font-size:15px;font-weight:700;letter-spacing:-0.015em;">Static Bloom</div>
+        <div style="font-size:10.5px;color:#6f665e;letter-spacing:0.01em;">5 members · Tel Aviv</div>
+      </div>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:3px;">
+      <div style="{{navActiveStyle}}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M3.5 9.6h17M8 3v4M16 3v4"></path></svg>
+        Calendar
+      </div>
+      <div class="nav" style="display:flex;align-items:center;gap:11px;height:38px;padding:0 12px;border-radius:9px;color:#8d857c;font-size:13.5px;font-weight:500;cursor:pointer;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="18" r="3"></circle><circle cx="18" cy="15.5" r="3"></circle><path d="M10 18V6.2l11-2.2v11.5"></path></svg>
+        Songs
+        <span class="mono" style="margin-left:auto;font-size:10.5px;color:#5d554e;">14</span>
+      </div>
+    </nav>
+
+    <div style="display:flex;flex-direction:column;gap:9px;padding:0 4px;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;padding-left:8px;">THIS MONTH</div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <sc-for list="{{stats}}" as="s" hint-placeholder-count="3">
+          <div style="display:flex;align-items:baseline;gap:8px;padding:6px 8px;">
+            <span style="{{s.dotStyle}}"></span>
+            <span style="font-size:12.5px;color:#a39a91;">{{s.label}}</span>
+            <span class="mono" style="margin-left:auto;font-size:12.5px;color:#f2ede7;font-weight:500;">{{s.value}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:12px;padding:0 8px;">
+      <div style="display:flex;align-items:center;">
+        <sc-for list="{{members}}" as="m" hint-placeholder-count="5">
+          <div style="{{m.avatarStyle}}" title="{{m.role}}">{{m.initials}}</div>
+        </sc-for>
+      </div>
+      <div style="font-size:10.5px;color:#5d554e;line-height:1.5;">Maya, Ori, Dana, Tal, Noam</div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;padding:24px 28px 26px;">
+
+    <header style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px;">
+      <div style="display:flex;align-items:baseline;gap:10px;">
+        <h1 class="dsp" style="margin:0;font-size:34px;font-weight:700;letter-spacing:-0.028em;line-height:1;">{{monthName}}</h1>
+        <span class="mono" style="font-size:19px;color:#6f665e;font-weight:400;">{{year}}</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+        <button class="ghost" onClick="{{prevMonth}}" aria-label="Previous month" style="width:32px;height:32px;border-radius:8px;border:1px solid #292421;display:flex;align-items:center;justify-content:center;color:#a39a91;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"></path></svg>
+        </button>
+        <button class="ghost" onClick="{{nextMonth}}" aria-label="Next month" style="width:32px;height:32px;border-radius:8px;border:1px solid #292421;display:flex;align-items:center;justify-content:center;color:#a39a91;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5 16 12l-6.5 6.5"></path></svg>
+        </button>
+        <button class="ghost" onClick="{{goToday}}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid #292421;color:#a39a91;font-size:12.5px;font-weight:500;">Today</button>
+      </div>
+
+      <button class="btn" onClick="{{startCreate}}" style="{{addBtnStyle}}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"></path></svg>
+        New rehearsal
+      </button>
+    </header>
+
+    <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin-bottom:8px;">
+      <sc-for list="{{weekdays}}" as="w" hint-placeholder-count="7">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;color:#5d554e;padding-left:3px;">{{w}}</div>
+      </sc-for>
+    </div>
+
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:7px;">
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="42">
+        <button class="cell" onClick="{{c.pick}}" style="{{c.style}}">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="mono" style="{{c.numStyle}}">{{c.label}}</span>
+            <span style="{{c.dotStyle}}"></span>
+          </div>
+          <sc-if value="{{c.hasEvent}}" hint-placeholder-val="{{true}}">
+            <div style="margin-top:auto;display:flex;flex-direction:column;gap:3px;text-align:left;">
+              <div class="mono" style="{{c.timeStyle}}">{{c.time}}</div>
+              <div style="font-size:10.5px;color:#8d857c;line-height:1.25;">{{c.sub}}</div>
+            </div>
+          </sc-if>
+        </button>
+      </sc-for>
+    </div>
+  </main>
+
+  <aside style="width:340px;flex:0 0 340px;border-left:1px solid #201d1a;background:#121110;display:flex;flex-direction:column;overflow-y:auto;">
+
+    <sc-if value="{{isDetail}}" hint-placeholder-val="{{true}}">
+      <div class="slidein" style="padding:24px 22px 26px;display:flex;flex-direction:column;gap:20px;" key="{{detailKey}}">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="{{badgeStyle}}">{{badgeText}}</div>
+          <div style="font-size:11px;color:#5d554e;letter-spacing:0.03em;">{{detail.weekday}}</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <h2 class="dsp" style="margin:0;font-size:26px;font-weight:700;letter-spacing:-0.025em;line-height:1.1;">{{detail.title}}</h2>
+          <div style="display:flex;align-items:center;gap:9px;font-size:13px;color:#a39a91;">
+            <span class="mono" style="color:#f2ede7;font-weight:500;">{{detail.time}}</span>
+            <span style="color:#3a332e;">·</span>
+            <span>{{detail.place}}</span>
+          </div>
+          <sc-if value="{{detail.hasNote}}" hint-placeholder-val="{{true}}">
+            <div style="{{noteStyle}}">{{detail.note}}</div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:flex-end;gap:2px;height:34px;opacity:0.85;">
+          <sc-for list="{{wave}}" as="bar" hint-placeholder-count="46">
+            <div style="{{bar.style}}"></div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;gap:0;border:1px solid #221f1c;border-radius:11px;overflow:hidden;background:#0f0e0d;">
+          <div style="flex:1;padding:12px 14px;border-right:1px solid #221f1c;">
+            <div class="mono" style="font-size:18px;font-weight:500;color:#f2ede7;">{{detail.songCount}}</div>
+            <div style="font-size:10.5px;color:#6f665e;margin-top:2px;">songs</div>
+          </div>
+          <div style="flex:1;padding:12px 14px;border-right:1px solid #221f1c;">
+            <div class="mono" style="font-size:18px;font-weight:500;color:#f2ede7;">{{detail.runtime}}</div>
+            <div style="font-size:10.5px;color:#6f665e;margin-top:2px;">runtime</div>
+          </div>
+          <div style="flex:1;padding:12px 14px;">
+            <div class="mono" style="font-size:18px;font-weight:500;color:#35C2C7;">{{detail.newCount}}</div>
+            <div style="font-size:10.5px;color:#6f665e;margin-top:2px;">new</div>
+          </div>
+        </div>
+
+        <sc-if value="{{detail.hasSongs}}" hint-placeholder-val="{{true}}">
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">SETLIST</div>
+            <div style="font-size:11px;color:#5d554e;">first {{previewCount}}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;">
+            <sc-for list="{{detail.preview}}" as="s" hint-placeholder-count="4">
+              <div class="row" style="display:flex;align-items:center;gap:11px;padding:8px 8px;margin:0 -8px;border-radius:8px;cursor:pointer;">
+                <span class="mono" style="font-size:11px;color:#4f4842;width:14px;text-align:right;">{{s.n}}</span>
+                <div style="min-width:0;flex:1;">
+                  <div style="font-size:13px;font-weight:500;color:#e8e2db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{s.title}}</div>
+                  <div style="font-size:10.5px;color:#6f665e;margin-top:1px;">{{s.artist}}</div>
+                </div>
+                <span class="mono" style="{{s.keyStyle}}">{{s.key}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{detail.noSongs}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;border:1px dashed #2b2622;border-radius:12px;text-align:center;">
+            <div style="font-size:12.5px;color:#6f665e;line-height:1.5;">No songs yet. Build the setlist on the rehearsal screen.</div>
+          </div>
+        </sc-if>
+
+        <button class="btn" style="{{openBtnStyle}}">
+          Open rehearsal
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 6l6 6-6 6"></path></svg>
+        </button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isEmptyDay}}" hint-placeholder-val="{{false}}">
+      <div class="slidein" style="padding:24px 22px;display:flex;flex-direction:column;gap:18px;" key="{{detailKey}}">
+        <div style="font-size:11px;color:#5d554e;letter-spacing:0.03em;">{{detail.weekday}}</div>
+        <h2 class="dsp" style="margin:0;font-size:26px;font-weight:700;letter-spacing:-0.025em;">{{detail.title}}</h2>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:34px 16px;border:1px dashed #2b2622;border-radius:14px;text-align:center;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#3f3833" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="18" r="3"></circle><circle cx="18" cy="15.5" r="3"></circle><path d="M10 18V6.2l11-2.2v11.5"></path></svg>
+          <div style="font-size:13px;color:#6f665e;line-height:1.55;max-width:210px;">Nothing scheduled. Book the room while it&#39;s still free.</div>
+          <button class="btn" onClick="{{startCreate}}" style="{{cardBtnStyle}}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"></path></svg>
+            Add rehearsal
+          </button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isCreate}}" hint-placeholder-val="{{false}}">
+      <div class="slidein" style="padding:24px 22px;display:flex;flex-direction:column;gap:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:0.13em;color:#5d554e;">NEW REHEARSAL</div>
+          <button class="ghost" onClick="{{cancelCreate}}" aria-label="Cancel" style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#6f665e;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+
+        <h2 class="dsp" style="margin:0;font-size:26px;font-weight:700;letter-spacing:-0.025em;">{{detail.title}}</h2>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="font-size:11px;font-weight:600;color:#8d857c;letter-spacing:0.02em;">Start time</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <sc-for list="{{timeOptions}}" as="t" hint-placeholder-count="4">
+              <button class="chip" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="font-size:11px;font-weight:600;color:#8d857c;letter-spacing:0.02em;">Room</label>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <sc-for list="{{placeOptions}}" as="p" hint-placeholder-count="3">
+              <button class="chip" onClick="{{p.pick}}" style="{{p.style}}">
+                <span>{{p.label}}</span>
+                <span style="{{p.checkStyle}}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="font-size:11px;font-weight:600;color:#8d857c;letter-spacing:0.02em;">Note <span style="color:#4f4842;font-weight:400;">optional</span></label>
+          <textarea value="{{draftNote}}" onChange="{{setNote}}" placeholder="What are we working on?" style="width:100%;height:70px;resize:none;background:#0f0e0d;border:1px solid #262220;border-radius:10px;padding:10px 12px;color:#e8e2db;font-size:13px;line-height:1.5;"></textarea>
+        </div>
+
+        <button class="btn" onClick="{{saveRehearsal}}" style="{{saveBtnStyle}}">Add to calendar</button>
+        <div style="font-size:11px;color:#4f4842;text-align:center;margin-top:-8px;">Songs are added on the rehearsal screen.</div>
+      </div>
+    </sc-if>
+  </aside>
+
+  <sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+    <div class="toast" style="position:absolute;left:50%;bottom:28px;display:flex;align-items:center;gap:10px;background:#1f1c1a;border:1px solid #322c28;border-radius:11px;padding:11px 16px;box-shadow:0 12px 34px rgba(0,0,0,0.5);">
+      <span style="{{toastDotStyle}}"></span>
+      <span style="font-size:13px;color:#e8e2db;">{{toastText}}</span>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#F1A252","options":["#F1A252","#35C2C7","#E4705A","#9BC46A"],"section":"Theme"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      y: 2026, m: 7,
+      sel: '2026-08-29',
+      mode: 'detail',
+      time: '20:00',
+      place: 'Studio 9',
+      note: '',
+      extra: {},
+      toast: null
+    };
+  }
+
+  componentWillUnmount() { if (this._t) clearTimeout(this._t); }
+
+  data() {
+    return {
+      '2026-07-07': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', n: 6, mins: 34, nw: 1 },
+      '2026-07-14': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', n: 7, mins: 38, nw: 2 },
+      '2026-07-21': { kind: 'r', time: '20:00', place: 'Studio 9', n: 7, mins: 36, nw: 0 },
+      '2026-07-28': { kind: 'r', time: '20:00', place: 'Studio 9', n: 8, mins: 41, nw: 1 },
+      '2026-08-04': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', n: 6, mins: 31, nw: 2 },
+      '2026-08-11': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', n: 7, mins: 37, nw: 1 },
+      '2026-08-18': { kind: 'r', time: '20:00', place: 'Studio 9', n: 8, mins: 39, nw: 1 },
+      '2026-08-22': { kind: 'r', time: '14:00', place: 'Studio 9', n: 9, mins: 44, nw: 0, note: 'Full run-through' },
+      '2026-08-29': { kind: 'r', time: '19:00', place: 'Studio 9', n: 8, mins: 39, nw: 2, tonight: true },
+      '2026-09-01': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', n: 7, mins: 35, nw: 1 },
+      '2026-09-05': { kind: 's', time: '21:30', place: 'Levontin 7', n: 11, mins: 52, nw: 0 },
+      '2026-09-08': { kind: 'r', time: '20:00', place: 'Studio 9', n: 8, mins: 40, nw: 0 },
+      '2026-09-15': { kind: 'r', time: '20:00', place: 'Studio 9', n: 8, mins: 40, nw: 1 }
+    };
+  }
+
+  setlist() {
+    return [
+      { n: '1', title: 'Copper Line', artist: 'Static Bloom', key: 'D' },
+      { n: '2', title: 'Half Past Nowhere', artist: 'Static Bloom', key: 'Am' },
+      { n: '3', title: 'Room 12', artist: 'Static Bloom', key: 'F#m' },
+      { n: '4', title: 'Northbound', artist: 'Static Bloom', key: 'G' }
+    ];
+  }
+
+  all() { return Object.assign({}, this.data(), this.state.extra); }
+
+  pad(n) { return n < 10 ? '0' + n : '' + n; }
+  iso(y, m, d) { return y + '-' + this.pad(m + 1) + '-' + this.pad(d); }
+
+  fmt(isoStr) {
+    const p = isoStr.split('-').map(Number);
+    const dt = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+    const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const WD = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    return { month: MON[p[1] - 1], day: p[2], weekday: WD[dt.getUTCDay()] };
+  }
+
+  runtime(mins) { return mins >= 60 ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : mins + ' min'; }
+
+  rgba(hex, a) {
+    const h = ('' + (hex || '#F1A252')).replace('#', '');
+    const n = h.length === 3 ? h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2) : h;
+    const r = parseInt(n.substr(0, 2), 16), g = parseInt(n.substr(2, 2), 16), b = parseInt(n.substr(4, 2), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(241,162,82,' + a + ')';
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  renderVals() {
+    const accent = this.props.accent || '#F1A252';
+    const A = (a) => this.rgba(accent, a);
+    const TEAL = '#35C2C7';
+    const TODAY = '2026-08-29';
+    const st = this.state;
+    const events = this.all();
+    const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    const first = new Date(Date.UTC(st.y, st.m, 1)).getUTCDay();
+    const dim = new Date(Date.UTC(st.y, st.m + 1, 0)).getUTCDate();
+    const prevDim = new Date(Date.UTC(st.y, st.m, 0)).getUTCDate();
+
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const dnum = i - first + 1;
+      const inMonth = dnum >= 1 && dnum <= dim;
+      const label = inMonth ? dnum : (dnum < 1 ? prevDim + dnum : dnum - dim);
+      const key = inMonth ? this.iso(st.y, st.m, dnum) : null;
+      const ev = key ? events[key] : null;
+      const isToday = key === TODAY;
+      const isSel = key === st.sel;
+      const show = ev && ev.kind === 's';
+      const tint = show ? TEAL : accent;
+
+      let bg = '#131211';
+      let border = '1px solid #1e1b19';
+      if (!inMonth) { bg = '#100f0e'; border = '1px solid #171514'; }
+      if (ev) { bg = show ? 'rgba(53,194,199,0.07)' : '' + A(0.07) + ''; border = '1px solid ' + (show ? 'rgba(53,194,199,0.22)' : '' + A(0.22) + ''); }
+      if (isSel) { border = '1px solid ' + tint; bg = ev ? (show ? 'rgba(53,194,199,0.13)' : '' + A(0.13) + '') : '#1b1815'; }
+
+      cells.push({
+        label: '' + label,
+        hasEvent: !!ev,
+        time: ev ? ev.time : '',
+        sub: ev ? (ev.kind === 's' ? 'Show · ' + ev.place : ev.n + ' songs · ' + ev.mins + 'm') : '',
+        style: 'display:flex;flex-direction:column;text-align:left;padding:9px 10px;border-radius:11px;background:' + bg + ';border:' + border + ';cursor:' + (inMonth ? 'pointer' : 'default') + ';opacity:' + (inMonth ? 1 : 0.45) + ';',
+        numStyle: 'font-size:12px;font-weight:' + (isToday ? '700' : '400') + ';color:' + (isToday ? tint : (ev ? '#d9d2cb' : '#6f665e')) + ';',
+        dotStyle: ev
+          ? 'width:6px;height:6px;border-radius:99px;background:' + tint + ';' + (ev.tonight ? 'box-shadow:0 0 0 3px ' + A(0.18) + ';' : '')
+          : (isToday ? 'width:6px;height:6px;border-radius:99px;border:1px solid ' + tint + ';' : 'width:6px;height:6px;'),
+        timeStyle: 'font-size:12px;font-weight:600;letter-spacing:-0.01em;color:' + tint + ';',
+        pick: inMonth ? () => this.setState({ sel: key, mode: events[key] ? 'detail' : 'empty' }) : () => {}
+      });
+    }
+
+    const prefix = st.y + '-' + this.pad(st.m + 1) + '-';
+    const monthKeys = Object.keys(events).filter((k) => k.indexOf(prefix) === 0);
+    const monthRehearsals = monthKeys.filter((k) => events[k].kind === 'r').length;
+    const monthShows = monthKeys.filter((k) => events[k].kind === 's').length;
+    const monthMins = monthKeys.reduce((a, k) => a + (events[k].mins || 0), 0);
+    const monthHours = monthMins ? (monthMins / 60).toFixed(1) : '0';
+
+    const sel = st.sel;
+    const ev = events[sel];
+    const f = this.fmt(sel);
+    const isCreate = st.mode === 'create';
+    const isDetail = !isCreate && !!ev;
+    const isEmptyDay = !isCreate && !ev;
+    const show = ev && ev.kind === 's';
+    const tint = show ? TEAL : accent;
+
+    const wave = [];
+    const seed = [3,7,12,18,11,6,14,22,17,9,5,13,24,19,10,7,16,26,21,12,6,11,20,28,23,14,8,15,25,18,9,5,12,21,16,10,6,13,23,17,8,4,10,19,14,7];
+    for (let i = 0; i < seed.length; i++) {
+      wave.push({ style: 'width:4px;border-radius:2px;height:' + Math.max(3, seed[i]) + 'px;background:' + (i < 18 ? tint : '#2e2926') + ';opacity:' + (i < 18 ? 0.9 : 1) + ';' });
+    }
+
+    const times = ['18:00', '19:00', '20:00', '21:00'];
+    const places = ['Studio 9', 'Rehearsal Room B', 'Levontin 7'];
+
+    const chipBase = 'height:34px;padding:0 14px;border-radius:9px;font-size:12.5px;font-weight:500;display:flex;align-items:center;justify-content:center;';
+    const rowBase = 'height:42px;padding:0 14px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:space-between;text-align:left;';
+
+    return {
+      accent: accent,
+      navActiveStyle: 'display:flex;align-items:center;gap:11px;height:38px;padding:0 12px;border-radius:9px;background:' + A(0.10) + ';color:' + accent + ';font-size:13.5px;font-weight:600;',
+      noteStyle: 'font-size:12.5px;color:#a2917a;line-height:1.55;padding:2px 0 2px 11px;border-left:2px solid ' + A(0.28) + ';margin-top:2px;',
+      stats: [
+        { label: 'Rehearsals', value: '' + monthRehearsals, dotStyle: 'width:6px;height:6px;border-radius:99px;background:' + accent + ';' },
+        { label: 'Shows', value: '' + monthShows, dotStyle: 'width:6px;height:6px;border-radius:99px;background:' + TEAL + ';' },
+        { label: 'Hours booked', value: monthHours, dotStyle: 'width:6px;height:6px;border-radius:99px;background:#3a332e;' }
+      ],
+      members: [
+        { initials: 'M', role: 'Maya · vocals' },
+        { initials: 'O', role: 'Ori · guitar' },
+        { initials: 'D', role: 'Dana · bass' },
+        { initials: 'T', role: 'Tal · drums' },
+        { initials: 'N', role: 'Noam · keys' }
+      ].map((m, i) => Object.assign({}, m, {
+        avatarStyle: 'width:28px;height:28px;border-radius:99px;background:#221e1b;border:1.5px solid #121110;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#8d857c;margin-left:' + (i === 0 ? '0' : '-8px') + ';'
+      })),
+      weekdays: ['SUN','MON','TUE','WED','THU','FRI','SAT'],
+      monthName: MON[st.m],
+      year: '' + st.y,
+      cells: cells,
+      isDetail: isDetail,
+      isEmptyDay: isEmptyDay,
+      isCreate: isCreate,
+      detailKey: sel + st.mode,
+      previewCount: '4',
+      detail: {
+        weekday: f.weekday,
+        title: f.month + ' ' + f.day,
+        time: ev ? ev.time : '',
+        place: ev ? ev.place : '',
+        songCount: ev ? '' + ev.n : '',
+        runtime: ev ? this.runtime(ev.mins) : '',
+        newCount: ev ? '' + ev.nw : '',
+        hasNote: !!(ev && ev.note),
+        note: (ev && ev.note) || '',
+        hasSongs: !!(ev && ev.n > 0),
+        noSongs: !!(ev && ev.n === 0),
+        preview: (ev && ev.n === 0 ? [] : this.setlist()).map((s) => Object.assign({}, s, {
+          keyStyle: 'font-size:11px;font-weight:500;color:' + TEAL + ';background:rgba(53,194,199,0.10);padding:3px 7px;border-radius:6px;'
+        }))
+      },
+      badgeText: ev && ev.tonight ? 'TONIGHT' : (show ? 'SHOW' : 'REHEARSAL'),
+      badgeStyle: 'font-size:9.5px;font-weight:700;letter-spacing:0.14em;padding:5px 9px;border-radius:6px;color:' + tint + ';background:' + (show ? 'rgba(53,194,199,0.12)' : '' + A(0.12) + '') + ';',
+      wave: wave,
+      cardBtnStyle: 'height:38px;padding:0 15px;border-radius:9px;background:' + accent + ';color:#17120c;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;',
+      addBtnStyle: 'margin-left:auto;height:36px;padding:0 15px;border-radius:9px;background:' + accent + ';color:#17120c;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;',
+      openBtnStyle: 'height:44px;border-radius:11px;background:' + accent + ';color:#17120c;font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;',
+      saveBtnStyle: 'height:44px;border-radius:11px;background:' + accent + ';color:#17120c;font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;',
+      timeOptions: times.map((t) => ({
+        label: t,
+        style: chipBase + 'border:1px solid ' + (st.time === t ? accent : '#262220') + ';color:' + (st.time === t ? accent : '#a39a91') + ';background:' + (st.time === t ? '' + A(0.10) + '' : 'transparent') + ';',
+        pick: () => this.setState({ time: t })
+      })),
+      placeOptions: places.map((p) => ({
+        label: p,
+        style: rowBase + 'border:1px solid ' + (st.place === p ? accent : '#262220') + ';color:' + (st.place === p ? '#f2ede7' : '#a39a91') + ';background:' + (st.place === p ? '' + A(0.08) + '' : 'transparent') + ';',
+        checkStyle: 'color:' + accent + ';display:flex;opacity:' + (st.place === p ? 1 : 0) + ';'
+      })).map((p, i) => Object.assign({}, p, { pick: () => this.setState({ place: places[i] }) })),
+      draftNote: st.note,
+      setNote: (e) => this.setState({ note: e.target.value }),
+      startCreate: () => this.setState({ mode: 'create', time: '20:00', place: 'Studio 9', note: '' }),
+      cancelCreate: () => this.setState({ mode: events[st.sel] ? 'detail' : 'empty' }),
+      saveRehearsal: () => {
+        const extra = Object.assign({}, st.extra);
+        extra[st.sel] = { kind: 'r', time: st.time, place: st.place, n: 0, mins: 0, nw: 0, note: st.note.trim() };
+        this.setState({ extra: extra, mode: 'detail', note: '', toast: 'Rehearsal added · ' + this.fmt(st.sel).month + ' ' + this.fmt(st.sel).day });
+        if (this._t) clearTimeout(this._t);
+        this._t = setTimeout(() => this.setState({ toast: null }), 3200);
+      },
+      prevMonth: () => { const m = st.m - 1; this.setState(m < 0 ? { m: 11, y: st.y - 1 } : { m: m }); },
+      nextMonth: () => { const m = st.m + 1; this.setState(m > 11 ? { m: 0, y: st.y + 1 } : { m: m }); },
+      goToday: () => this.setState({ y: 2026, m: 7, sel: TODAY, mode: 'detail' }),
+      toast: !!st.toast,
+      toastText: st.toast || '',
+      toastDotStyle: 'width:7px;height:7px;border-radius:99px;background:' + accent + ';'
+    };
+  }
+}
+</script>
+</body>
+</html>
