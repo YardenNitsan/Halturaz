@@ -5,7 +5,6 @@ import { Wave } from '../components/Wave.jsx';
 import { useStore } from '../store.jsx';
 import { BAND } from '../data.js';
 import { transpose, chordsUsed } from '../lib/chords.js';
-import { keyStyle, keyHue } from '../lib/keys.js';
 import { longDate, mmss } from '../lib/dates.js';
 
 export default function SongScreen() {
@@ -85,10 +84,7 @@ export default function SongScreen() {
   const hasChart = song.sections.length > 0;
   const noteAuthor = BAND.members.find((m) => m.id === song.noteBy);
 
-  // The whole screen retints as you transpose.
   const chartVars = {
-    ...keyStyle(displayKey),
-    '--k-h': String(keyHue(displayKey) ?? 60),
     '--lyric-size': `${(20 * sc).toFixed(1)}px`,
     '--chord-size': `${(13.5 * sc).toFixed(1)}px`,
     '--chord-row': `${chordRow.toFixed(1)}px`,
@@ -97,7 +93,7 @@ export default function SongScreen() {
 
   return (
     <>
-      <main className={'main' + (stage ? ' is-stage' : '')} style={{ ...keyStyle(displayKey), '--k-h': String(keyHue(displayKey) ?? 60) }}>
+      <main className={'main' + (stage ? ' is-stage' : '')}>
         <header className="song-head" style={stage ? { background: '#0c0c0b' } : undefined}>
           {!stage && (
             <Link to={from ? `/rehearsal/${from}` : '/songs'} className="back" style={{ marginBottom: 13 }}>
@@ -112,7 +108,7 @@ export default function SongScreen() {
                 {position >= 0 && <span className="track-num">{String(position + 1).padStart(2, '0')}</span>}
                 <h1 className="song-title" style={stage ? { fontSize: 30 } : undefined}>{song.title}</h1>
               </div>
-              <div className="meta-row" style={{ fontSize: 13.5, color: 'var(--ink-2)' }}>
+              <div className="meta-row" style={{ fontSize: 13.5, color: 'var(--dim)' }}>
                 <span>{song.artist}</span>
                 <span className="sep">·</span>
                 <span className="mono">{mmss(song.sec)}</span>
@@ -174,8 +170,8 @@ export default function SongScreen() {
                 {chords.slice(0, 7).map((c) => (
                   <span
                     key={c}
-                    style={keyStyle(c)}
-                    className="key-badge mono"
+                    className="mono"
+                    style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-a08)', border: '1px solid var(--accent-a16)', padding: '4px 9px', borderRadius: 6 }}
                   >
                     {c}
                   </span>
@@ -249,7 +245,7 @@ export default function SongScreen() {
                   {noteAuthor && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 2 }}>
                       <div className="avatar" style={{ width: 22, height: 22, marginLeft: 0, fontSize: 10, borderColor: 'transparent' }}>{noteAuthor.initials}</div>
-                      <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>
+                      <span style={{ fontSize: 11, color: 'var(--fainter)' }}>
                         {noteAuthor.name} · updated {song.noteAge}
                       </span>
                     </div>
@@ -262,7 +258,7 @@ export default function SongScreen() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0f0e0d', border: '1px solid var(--line)', borderRadius: 11, padding: '12px 13px' }}>
                   <button
                     aria-label="Play room take"
-                    style={{ width: 30, height: 30, borderRadius: 99, background: '#221e1b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gig)', flex: '0 0 auto' }}
+                    style={{ width: 30, height: 30, borderRadius: 99, background: '#221e1b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flex: '0 0 auto' }}
                   >
                     <Icon name="play" size={12} />
                   </button>
@@ -270,12 +266,12 @@ export default function SongScreen() {
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#d9d2cb' }}>Room take · Aug 18</div>
                     <Wave lit={14} height={16} />
                   </div>
-                  <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>4:31</span>
+                  <span className="mono" style={{ fontSize: 10.5, color: 'var(--fainter)' }}>4:31</span>
                 </div>
               </div>
 
-              <p className="hide-sm" style={{ margin: 'auto 0 0', fontSize: 10.5, color: 'var(--ink-4)', lineHeight: 1.7 }}>
-                <b style={{ color: 'var(--ink-3)', fontWeight: 600 }}>Shortcuts</b>
+              <p className="hide-sm" style={{ margin: 'auto 0 0', fontSize: 10.5, color: 'var(--fainter)', lineHeight: 1.7 }}>
+                <b style={{ color: 'var(--faint)', fontWeight: 600 }}>Shortcuts</b>
                 <br />+ / − transpose · 0 reset · [ ] text size
                 <br />C chords · F stage · J / K next &amp; previous
               </p>
@@ -284,7 +280,7 @@ export default function SongScreen() {
         </div>
 
         {(next || prev) && (
-          <div className="show-sm" style={{ flex: '0 0 auto', background: '#111010', borderTop: '1px solid var(--card)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="show-sm" style={{ flex: '0 0 auto', background: '#111010', borderTop: '1px solid var(--raised-2)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               className="icon-btn bordered"
               style={{ width: 46, height: 46, borderRadius: 12 }}
@@ -300,7 +296,7 @@ export default function SongScreen() {
                 {next ? next.title : song.title}
               </div>
             </div>
-            {next && <span className="key-badge" style={keyStyle(next.key)}>{next.key}</span>}
+            {next && <span className="key-badge">{next.key}</span>}
             <button
               className="btn"
               style={{ width: 46, height: 46, borderRadius: 12, padding: 0 }}

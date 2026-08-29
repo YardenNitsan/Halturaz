@@ -38,18 +38,10 @@ src/
 
 ## Design notes
 
-Warm paper, ink, and an editorial serif — a printed setlist rather than a dark
-dashboard. Instrument Serif for display, Schibsted Grotesk for UI, JetBrains
-Mono for anything you read as a number.
-
-**Colour is information, not decoration.** Every musical key owns a hue, placed
-around the wheel in circle-of-fifths order (`lib/keys.js`), so neighbouring hues
-are neighbouring keys and a tritone lands opposite. Minor keys sit a shade
-deeper than their major counterpart. That one rule colours the key badges, the
-library sleeves, the setlist rows, the chords in a chart, and the calendar —
-where each rehearsal shows the *colour chord* of its setlist, one dot per song.
-The chrome stays neutral so the keys can speak; gigs are the one thing that
-gets a colour outright.
+Warm near-black surfaces; **amber** carries rehearsals and chords, **teal**
+carries musical data (keys, tempo). Bricolage Grotesque for display, Instrument
+Sans for UI, JetBrains Mono for anything you read as a number — chords, tempos,
+times.
 
 Chords sit above the exact syllable they land on: each line is a run of
 inline-block segments, chord stacked over its lyric fragment, so alignment

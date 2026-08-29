@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon.jsx';
 import { useStore } from '../store.jsx';
 import { mmss, runtime } from '../lib/dates.js';
-import { keyStyle } from '../lib/keys.js';
 
 const GROUPS = [
   { id: 'all', label: 'All songs', test: () => true },
@@ -42,7 +41,7 @@ export default function LibraryScreen() {
               <button
                 key={g.id}
                 className="nav-item"
-                style={{ height: 34, fontSize: 12.5, background: group === g.id ? 'var(--card)' : undefined, color: group === g.id ? 'var(--ink)' : undefined, fontWeight: group === g.id ? 600 : 400 }}
+                style={{ height: 34, fontSize: 12.5, background: group === g.id ? 'var(--raised-2)' : undefined, color: group === g.id ? 'var(--text)' : undefined, fontWeight: group === g.id ? 600 : 400 }}
                 onClick={() => setGroup(g.id)}
               >
                 {g.label}
@@ -51,10 +50,10 @@ export default function LibraryScreen() {
             );
           })}
         </div>
-        <div style={{ marginTop: 'auto', padding: '0 8px', fontSize: 10.5, color: 'var(--ink-4)', lineHeight: 1.6 }}>
+        <div style={{ marginTop: 'auto', padding: '0 8px', fontSize: 10.5, color: 'var(--fainter)', lineHeight: 1.6 }}>
           Library total
           <br />
-          <span className="mono" style={{ color: 'var(--ink-2)', fontSize: 13 }}>{runtime(totalSec)}</span> of material
+          <span className="mono" style={{ color: 'var(--dim)', fontSize: 13 }}>{runtime(totalSec)}</span> of material
         </div>
       </aside>
 
@@ -63,7 +62,7 @@ export default function LibraryScreen() {
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: 'wrap' }}>
             <div>
               <h1 style={{ fontSize: 34, marginBottom: 7 }}>Songs</h1>
-              <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+              <div style={{ fontSize: 13, color: 'var(--dim)' }}>
                 {rows.length} of {songs.length} · {active.label}
               </div>
             </div>
@@ -89,7 +88,7 @@ export default function LibraryScreen() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 16, flexWrap: 'wrap' }}>
             <span className="eyebrow hide-sm" style={{ marginRight: 3 }}>Key</span>
             {keys.map((k) => (
-              <button key={k} className={'chip mono' + (k === 'All' ? '' : ' keyed') + (key === k ? ' is-on' : '')} style={k === 'All' ? undefined : keyStyle(k)} onClick={() => setKey(k)}>
+              <button key={k} className={'chip mono' + (key === k ? ' is-on' : '')} onClick={() => setKey(k)}>
                 {k}
               </button>
             ))}
@@ -108,14 +107,14 @@ export default function LibraryScreen() {
 
         <div className="scroll" style={{ padding: '6px 20px 30px' }}>
           {rows.map((s) => (
-            <button key={s.id} className="lib-row" style={keyStyle(s.key)} onClick={() => navigate(`/song/${s.id}`)}>
-              <span className={'art' + (s.own ? '' : ' cover')}>{s.key}</span>
+            <button key={s.id} className="lib-row" onClick={() => navigate(`/song/${s.id}`)}>
+              <span className={'art' + (s.own ? ' own' : '')}>{s.key}</span>
 
               <span className="grow" style={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                   <span className="set-title truncate">{s.title}</span>
                   {s.needsWork && <span className="tag tag-work">NEEDS WORK</span>}
-                  {s.sections.length === 0 && <span className="tag" style={{ color: 'var(--ink-4)', background: 'var(--sunk)' }}>NO CHART</span>}
+                  {s.sections.length === 0 && <span className="tag" style={{ color: 'var(--fainter)', background: 'var(--raised)' }}>NO CHART</span>}
                 </span>
                 <span className="set-artist truncate">{s.artist}</span>
               </span>
@@ -123,7 +122,7 @@ export default function LibraryScreen() {
               <span className="lib-key"><span className="key-badge">{s.key}</span></span>
               <span className="lib-tempo set-bpm">{s.bpm} <i>bpm</i></span>
               <span className="lib-time set-dur">{mmss(s.sec)}</span>
-              <span className="lib-last" style={{ fontSize: 12, color: 'var(--ink-3)' }}>{s.lastPlayed}</span>
+              <span className="lib-last" style={{ fontSize: 12, color: 'var(--faint)' }}>{s.lastPlayed}</span>
               <span className="go"><Icon name="arrow" size={13} /></span>
             </button>
           ))}
