@@ -1,0 +1,6 @@
+# The design canvas is reference material, not the shipped app — keep it out of
+# the language stats so they reflect app/, which is React.
+design/** linguist-documentation
+
+# Linguist reads .jsx as JavaScript already; state it so the app reads as React.
+*.jsx linguist-language=JavaScript
