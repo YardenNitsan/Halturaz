@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon.jsx';
-import { Wave } from '../components/Wave.jsx';
 import { useStore } from '../store.jsx';
 import { ROOMS, TIMES } from '../data.js';
 import { MONTHS, monthGrid, addMonths, parseISO, longDate, weekdayOf, runtime, relative } from '../lib/dates.js';
+import { keyStyle } from '../lib/keys.js';
 
 const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const DOW_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -112,14 +112,21 @@ export default function CalendarScreen() {
                 >
                   <div className="day-top">
                     <span className="day-num">{c.label}</span>
-                    <span className="day-dot" />
                   </div>
                   {ev && (
                     <div className="day-body">
                       <span className="day-time">{ev.time}</span>
-                      <span className="day-sub">
-                        {ev.kind === 's' ? `Show · ${ev.place}` : `${ev.songs.length} songs`}
-                      </span>
+                      {ev.songs.length ? (
+                        <span className="day-keys" title={ev.songs.map((sid) => byId[sid]?.key).filter(Boolean).join(' · ')}>
+                          {ev.songs.slice(0, 6).map((sid) => {
+                            const song = byId[sid];
+                            return song ? <i key={sid} style={keyStyle(song.key)} /> : null;
+                          })}
+                          {ev.songs.length > 6 && <span>+{ev.songs.length - 6}</span>}
+                        </span>
+                      ) : (
+                        <span className="day-sub">{ev.kind === 's' ? ev.place : 'No songs yet'}</span>
+                      )}
                     </div>
                   )}
                 </button>
@@ -142,7 +149,7 @@ export default function CalendarScreen() {
             <h2 style={{ fontSize: 26 }}>{longDate(selected)}</h2>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--dim)' }}>
+              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--ink-2)' }}>
                 Start time
               </label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -155,7 +162,7 @@ export default function CalendarScreen() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--dim)' }}>
+              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--ink-2)' }}>
                 Room
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -174,8 +181,8 @@ export default function CalendarScreen() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--dim)' }} htmlFor="note">
-                Note <span style={{ color: 'var(--fainter)', fontWeight: 400 }}>optional</span>
+              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--ink-2)' }} htmlFor="note">
+                Note <span style={{ color: 'var(--ink-4)', fontWeight: 400 }}>optional</span>
               </label>
               <textarea
                 id="note"
@@ -189,7 +196,7 @@ export default function CalendarScreen() {
             <button className="btn btn-lg btn-block" onClick={save}>
               Add to calendar
             </button>
-            <p style={{ margin: '-10px 0 0', fontSize: 11, color: 'var(--fainter)', textAlign: 'center' }}>
+            <p style={{ margin: '-10px 0 0', fontSize: 11, color: 'var(--ink-4)', textAlign: 'center' }}>
               Songs are added on the rehearsal screen.
             </p>
           </div>
@@ -199,7 +206,7 @@ export default function CalendarScreen() {
               <span className={'badge' + (event.kind === 's' ? ' show' : '')}>
                 {selected === today ? 'TONIGHT' : event.kind === 's' ? 'SHOW' : 'REHEARSAL'}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--fainter)' }}>
+              <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>
                 {weekdayOf(selected)} · {relative(selected, today)}
               </span>
             </div>
@@ -214,7 +221,18 @@ export default function CalendarScreen() {
               {event.note && <div className="note" style={{ fontSize: 12.5 }}>{event.note}</div>}
             </div>
 
-            <Wave lit={Math.round((event.done.length / Math.max(1, event.songs.length)) * 46)} color={event.kind === 's' ? 'var(--teal)' : undefined} />
+            {setSongs.length > 0 && (
+              <div>
+                <div className="keybar" title={setSongs.map((s2) => s2.key).join(' · ')}>
+                  {setSongs.map((s2) => (
+                    <i key={s2.id} style={keyStyle(s2.key)} />
+                  ))}
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--ink-3)', marginTop: 7 }}>
+                  Key signature of the set — one band per song
+                </div>
+              </div>
+            )}
 
             <div className="stat-row">
               <div className="stat-cell">
@@ -226,7 +244,7 @@ export default function CalendarScreen() {
                 <span>runtime</span>
               </div>
               <div className="stat-cell">
-                <b style={{ color: 'var(--teal)' }}>{event.done.length}</b>
+                <b>{event.done.length}</b>
                 <span>reviewed</span>
               </div>
             </div>
@@ -235,7 +253,7 @@ export default function CalendarScreen() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div className="eyebrow">Setlist</div>
-                  <span style={{ fontSize: 11, color: 'var(--fainter)' }}>first {Math.min(4, setSongs.length)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>first {Math.min(4, setSongs.length)}</span>
                 </div>
                 <div>
                   {setSongs.slice(0, 4).map((s, i) => (
@@ -245,7 +263,7 @@ export default function CalendarScreen() {
                         <span className="mini-title truncate" style={{ display: 'block' }}>{s.title}</span>
                         <span className="mini-sub">{s.artist}</span>
                       </span>
-                      <span className="key-badge">{s.key}</span>
+                      <span className="key-badge" style={keyStyle(s.key)}>{s.key}</span>
                     </button>
                   ))}
                 </div>
@@ -263,7 +281,7 @@ export default function CalendarScreen() {
           </div>
         ) : (
           <div className="panel-inner slidein" key={selected}>
-            <div style={{ fontSize: 11, color: 'var(--fainter)' }}>{weekdayOf(selected)}</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-4)' }}>{weekdayOf(selected)}</div>
             <h2 style={{ fontSize: 26 }}>{longDate(selected)}</h2>
             <div className="empty">
               <Icon name="music" size={30} style={{ color: '#3f3833' }} />

@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon.jsx';
 import { useStore } from '../store.jsx';
 import { BAND, ATTENDANCE } from '../data.js';
 import { MONTHS, parseISO, longDate, weekdayOf, mmss, runtime, relative } from '../lib/dates.js';
+import { keyStyle } from '../lib/keys.js';
 
 export default function RehearsalScreen() {
   const { date } = useParams();
@@ -79,7 +80,7 @@ export default function RehearsalScreen() {
                 <span className={'badge' + (isShow ? ' show' : '')}>
                   {date === today ? 'TONIGHT' : isShow ? 'SHOW' : 'REHEARSAL'}
                 </span>
-                <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>
+                <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
                   {weekdayOf(date)} · {relative(date, today)}
                 </span>
               </div>
@@ -105,8 +106,8 @@ export default function RehearsalScreen() {
 
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 20 }}>
               <div className="hide-sm" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7 }}>
-                <div style={{ fontSize: 11, color: 'var(--faint)' }}>
-                  <b className="mono" style={{ color: 'var(--text)' }}>{event.done.length}</b> of{' '}
+                <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+                  <b className="mono" style={{ color: 'var(--ink)' }}>{event.done.length}</b> of{' '}
                   <span className="mono">{event.songs.length}</span> reviewed
                 </div>
                 <div className="progress" style={{ width: 150 }}>
@@ -127,7 +128,7 @@ export default function RehearsalScreen() {
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '20px 34px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Setlist</h2>
-            <span className="hide-sm" style={{ fontSize: 11, color: 'var(--fainter)' }}>drag to reorder</span>
+            <span className="hide-sm" style={{ fontSize: 11, color: 'var(--ink-4)' }}>drag to reorder</span>
 
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 9 }}>
               <div className="search hide-sm">
@@ -166,6 +167,7 @@ export default function RehearsalScreen() {
                 <div
                   key={s.id}
                   className={cls}
+                  style={keyStyle(s.key)}
                   draggable
                   onDragStart={(e) => {
                     dragging.current = s.index;
@@ -198,7 +200,7 @@ export default function RehearsalScreen() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
                         <span className="set-artist truncate">{s.artist}</span>
                         <span className="show-sm key-badge">{s.key}</span>
-                        <span className="show-sm mono" style={{ fontSize: 11, color: 'var(--faint)' }}>{s.bpm} bpm</span>
+                        <span className="show-sm mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>{s.bpm} bpm</span>
                         {s.note && <span className="set-note truncate hide-sm">— {s.note.split('.')[0]}</span>}
                       </span>
                     </button>
@@ -207,7 +209,7 @@ export default function RehearsalScreen() {
                   <div className="set-key"><span className="key-badge">{s.key}</span></div>
 
                   <div className="set-tempo" style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: 99, background: 'var(--line-3)' }} />
+                    <span style={{ width: 5, height: 5, borderRadius: 99, background: 'var(--line-2)' }} />
                     <span className="set-bpm">{s.bpm}</span>
                   </div>
 
@@ -267,14 +269,14 @@ export default function RehearsalScreen() {
                       <span className="mini-title truncate" style={{ display: 'block' }}>{s.title}</span>
                       <span className="mini-sub">{s.artist} · {s.key} · {s.bpm} BPM</span>
                     </span>
-                    <span style={{ width: 26, height: 26, borderRadius: 99, border: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flex: '0 0 auto' }}>
+                    <span style={{ width: 26, height: 26, borderRadius: 99, border: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gig)', flex: '0 0 auto' }}>
                       <Icon name="plus" size={13} />
                     </span>
                   </button>
                 ))}
               </div>
             ) : (
-              <p style={{ fontSize: 12.5, color: 'var(--fainter)', textAlign: 'center', padding: '30px 10px', lineHeight: 1.55 }}>
+              <p style={{ fontSize: 12.5, color: 'var(--ink-4)', textAlign: 'center', padding: '30px 10px', lineHeight: 1.55 }}>
                 Every song in the library is already in this set.
               </p>
             )}
@@ -297,7 +299,7 @@ export default function RehearsalScreen() {
                       <div className="avatar" style={{ width: 30, height: 30, marginLeft: 0, borderColor: 'transparent' }}>{m2.initials}</div>
                       <div className="grow">
                         <div style={{ fontSize: 12.5, fontWeight: 500, color: '#d9d2cb' }}>{m2.name}</div>
-                        <div style={{ fontSize: 10.5, color: 'var(--fainter)' }}>{m2.role}</div>
+                        <div style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>{m2.role}</div>
                       </div>
                       <span className={'att-status ' + (attendance[m2.id] || 'in')}>
                         {attendance[m2.id] === 'late' ? 'Late' : 'In'}
@@ -315,20 +317,14 @@ export default function RehearsalScreen() {
                   {Object.entries(keyTally).map(([k, n]) => (
                     <span
                       key={k}
-                      className="mono"
-                      style={{
-                        fontSize: 11,
-                        padding: '4px 8px',
-                        borderRadius: 6,
-                        color: n > 1 ? 'var(--teal)' : 'var(--dim)',
-                        background: n > 1 ? 'var(--teal-a10)' : 'var(--raised)'
-                      }}
+                      className="key-badge"
+                      style={keyStyle(k)}
                     >
                       {k} ×{n}
                     </span>
                   ))}
                 </div>
-                <p style={{ margin: 0, fontSize: 11.5, color: 'var(--fainter)', lineHeight: 1.55 }}>
+                <p style={{ margin: 0, fontSize: 11.5, color: 'var(--ink-4)', lineHeight: 1.55 }}>
                   {Object.values(keyTally).some((n) => n > 1)
                     ? 'Repeated keys are highlighted — worth spacing them out.'
                     : 'Every song sits in its own key.'}

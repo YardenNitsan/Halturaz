@@ -16,12 +16,12 @@ function MonthStats() {
       <div className="eyebrow">This month</div>
       <div>
         <div className="stat">
-          <span className="stat-dot" style={{ background: 'var(--accent)' }} />
+          <span className="stat-dot" style={{ background: 'var(--ink)' }} />
           <span className="stat-label">Rehearsals</span>
           <span className="stat-value">{rehearsals}</span>
         </div>
         <div className="stat">
-          <span className="stat-dot" style={{ background: 'var(--teal)' }} />
+          <span className="stat-dot" style={{ background: 'var(--gig)' }} />
           <span className="stat-label">Shows</span>
           <span className="stat-value">{shows}</span>
         </div>
@@ -70,7 +70,7 @@ export function Shell({ children }) {
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--fainter)', lineHeight: 1.6 }}>
+          <div style={{ fontSize: 10.5, color: 'var(--ink-4)', lineHeight: 1.6 }}>
             {BAND.members.map((m) => m.name).join(', ')}
           </div>
         </div>

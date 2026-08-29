@@ -75,9 +75,9 @@ export function Icon({ name, size = 17, ...rest }) {
 export function Logo({ size = 26 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="3" fill="var(--accent)" />
-      <path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" opacity="0.9" />
-      <path d="M12 8.2a3.8 3.8 0 0 1 3.8 3.8" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" opacity="0.5" />
+      <circle cx="12" cy="12" r="3" fill="var(--gig)" />
+      <path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" stroke="var(--gig)" strokeWidth="1.6" strokeLinecap="round" opacity="0.9" />
+      <path d="M12 8.2a3.8 3.8 0 0 1 3.8 3.8" stroke="var(--gig)" strokeWidth="1.6" strokeLinecap="round" opacity="0.5" />
       <path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" stroke="#4b4340" strokeWidth="1.6" strokeLinecap="round" opacity="0.45" />
     </svg>
   );
