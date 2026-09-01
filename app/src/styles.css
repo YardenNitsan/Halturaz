@@ -1,10 +1,13 @@
 /* ============================================================
    Static Bloom — design system
    Warm near-black studio surfaces, amber for rehearsals and
-   chords, teal for musical data (keys, tempo).
+   the chrome around them. Everything the music owns — keys,
+   chord roots, tempo, the five people — carries its own hue
+   off `--h`, always at the accent's lightness and chroma.
    ============================================================ */
 
 :root {
+  color-scheme: dark;
   --bg: #0e0d0c;
   --surface: #121110;
   --surface-2: #141211;
@@ -31,6 +34,17 @@
   --teal: #35c2c7;
   --teal-a10: rgba(53, 194, 199, 0.1);
   --teal-a20: rgba(53, 194, 199, 0.2);
+
+  /* Hue channel. `--h` is the hue angle, set per element from the data (see
+     lib/hues.js); lightness and chroma are pinned here to the accent's own
+     values, so a green key badge and an amber one weigh exactly the same.
+     Written out as oklch() at every use — a `--hue: oklch(... var(--h))`
+     alias would resolve against :root's --h and never see the element's. */
+  --hue-lc: 0.785 0.108;
+  /* How hard the hue's own fill and edge press on the surface behind them. */
+  --hue-fill: 0.12;
+  --hue-edge: 0.3;
+
   --good: #9bc46a;
   --warn: #c79a5c;
   --bad: #e4705a;
@@ -39,13 +53,99 @@
   --ui: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  --muted: #a39a91;
+  --hover: #231f1c;
+  --hover-line: #453c35;
+  --cell: #131211;
+  --cell-line: #1e1b19;
+  --cell-out: #100f0e;
+  --well: #0f0e0d;
+  --bar: #111010;
+  --ink: #e8e2db;
+  --ink-soft: #d9d2cb;
+  --empty-line: #2b2622;
+  --progress-track: #211d1b;
+  --scrim: rgba(0, 0, 0, 0.55);
+  /* What a sheet floating over the page casts. Black on near-black, a warm
+     brown on paper — pure black there reads as soot, not shade. */
+  --lift: rgba(0, 0, 0, 0.5);
+
   --rail: 232px;
+  --tabbar-h: calc(79px + env(safe-area-inset-bottom));
+  --peek-h: 74px;
+  --act-h: 60px;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  /* What a thing does when it is let go of: the month strip, the day sheet and
+     the dimming behind it all land on this one curve. */
+  --settle: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  /* Paper, not bleached card. The page sits a shade deeper than the cards on
+     it, so a surface reads as something laid down rather than a lighter patch
+     of the same beige; ink and rules are pulled darker to match. */
+  --bg: #ece3d4;
+  --surface: #f7f2e8;
+  --surface-2: #f1e9db;
+  --raised: #fffdf7;
+  --raised-2: #e5dac6;
+  --line: #dcd0bc;
+  --line-2: #c8b9a1;
+  --line-3: #ad9b83;
+
+  --text: #241f19;
+  --text-2: #423a31;
+  --dim: #62594e;
+  --faint: #7c7266;
+  --fainter: #968b7d;
+
+  --accent: #b4650f;
+  --accent-ink: #fffaf2;
+  --accent-a08: rgba(180, 101, 15, 0.08);
+  --accent-a10: rgba(180, 101, 15, 0.12);
+  --accent-a16: rgba(180, 101, 15, 0.18);
+  --accent-a22: rgba(180, 101, 15, 0.26);
+  --accent-a35: rgba(180, 101, 15, 0.4);
+
+  --teal: #0d787d;
+  --teal-a10: rgba(13, 120, 125, 0.12);
+  --teal-a20: rgba(13, 120, 125, 0.24);
+
+  /* Darker and more saturated than the dark theme's channel: the same hue has
+     to carry against paper, where a pale badge would vanish. */
+  --hue-lc: 0.575 0.145;
+  --hue-fill: 0.17;
+  --hue-edge: 0.42;
+
+  --good: #4d7b26;
+  --warn: #9a6614;
+  --bad: #bd3d28;
+
+  --muted: #62594e;
+  --hover: #e5dbc9;
+  --hover-line: #b5a58d;
+  --cell: #fffdf7;
+  --cell-line: #ded2be;
+  --cell-out: #e6dccb;
+  --well: #f2ebdd;
+  --bar: #f7f2e8;
+  --ink: #241f19;
+  --ink-soft: #38312a;
+  --empty-line: #c8b9a1;
+  --progress-track: #ddd1bd;
+  --scrim: rgba(40, 32, 22, 0.38);
+  --lift: rgba(58, 42, 20, 0.22);
 }
 
 * { box-sizing: border-box; }
 
 html, body, #root { height: 100%; }
+
+/* The app is a fixed frame with its own scrollers inside it. The page itself
+   never scrolls, so the browser is never handed an overscroll to turn into a
+   pull-to-refresh halfway through a swipe. */
+html { overflow: hidden; overscroll-behavior: none; }
 
 body {
   margin: 0;
@@ -54,11 +154,12 @@ body {
   font-family: var(--ui);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
   overscroll-behavior: none;
 }
 
 a { color: var(--accent); text-decoration: none; }
-a:hover { color: #f7bd80; }
+a:hover { color: var(--accent); filter: brightness(1.12); }
 
 button {
   font: inherit;
@@ -85,6 +186,28 @@ h1, h2, h3 { margin: 0; font-family: var(--display); letter-spacing: -0.028em; f
 /* ---------- shell ---------- */
 
 .app { display: flex; height: 100%; overflow: hidden; }
+
+.app-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-toggles {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top));
+  inset-inline-end: 16px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  view-transition-name: app-toggles;
+}
+
+.app:has(.is-stage) .app-toggles { display: none; }
 
 .rail {
   width: var(--rail);
@@ -123,33 +246,48 @@ h1, h2, h3 { margin: 0; font-family: var(--display); letter-spacing: -0.028em; f
 
 .stat { display: flex; align-items: baseline; gap: 8px; padding: 6px 8px; }
 .stat-dot { width: 6px; height: 6px; border-radius: 99px; flex: 0 0 auto; }
-.stat-label { font-size: 12.5px; color: #a39a91; }
+.stat-label { font-size: 12.5px; color: var(--muted); }
 .stat-value { margin-left: auto; font-family: var(--mono); font-size: 12.5px; font-weight: 500; }
 
 .avatars { display: flex; align-items: center; }
 .avatar {
   width: 28px; height: 28px; border-radius: 99px;
-  background: #221e1b; border: 1.5px solid var(--surface);
+  /* Everyone carries their own colour — see BAND.members in data.js. */
+  background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill)); border: 1.5px solid var(--surface);
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 600; color: var(--dim);
+  font-size: 11px; font-weight: 600; color: oklch(var(--hue-lc) var(--h, 62));
   flex: 0 0 auto;
 }
 .avatar + .avatar { margin-left: -8px; }
 
+.reset-demo {
+  align-self: flex-start; font-size: 10.5px; color: var(--fainter);
+  border-bottom: 1px solid transparent; transition: color 0.14s ease;
+}
+.reset-demo:hover { color: var(--faint); border-bottom-color: var(--line-3); }
+
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
-.scroll { flex: 1; min-height: 0; overflow-y: auto; }
+/* Every scroller keeps its overscroll to itself, so reaching the end of one
+   never pulls on the page behind it. */
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 
 /* ---------- controls ---------- */
 
 .btn {
   height: 38px; padding: 0 15px; border-radius: 9px;
   background: var(--accent); color: var(--accent-ink);
-  font-size: 13px; font-weight: 600;
+  font-size: 13px; font-weight: 600; white-space: nowrap;
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   transition: filter 0.14s ease, transform 0.1s ease;
 }
 .btn:hover { filter: brightness(1.09); }
 .btn:active { transform: translateY(1px); }
+
+button:disabled { cursor: default; }
+.btn:disabled, .ghost:disabled, .seg button:disabled { opacity: 0.4; }
+.btn:disabled:hover { filter: none; }
+.btn:disabled:active { transform: none; }
+.ghost:disabled:hover, .seg button:disabled:hover { background: none; border-color: var(--line-2); color: inherit; }
 .btn-lg { height: 44px; border-radius: 11px; font-size: 13.5px; padding: 0 18px; }
 .btn-block { width: 100%; }
 
@@ -160,7 +298,7 @@ h1, h2, h3 { margin: 0; font-family: var(--display); letter-spacing: -0.028em; f
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
 }
-.ghost:hover { background: #231f1c; border-color: #453c35; color: var(--text); }
+.ghost:hover { background: var(--hover); border-color: var(--hover-line); color: var(--text); }
 .ghost.is-on { border-color: var(--accent); background: var(--accent-a10); color: var(--accent); }
 
 .icon-btn {
@@ -175,7 +313,7 @@ h1, h2, h3 { margin: 0; font-family: var(--display); letter-spacing: -0.028em; f
 .field {
   width: 100%; height: 38px; padding: 0 12px;
   border-radius: 9px; background: var(--surface-2);
-  border: 1px solid var(--line-2); color: #e8e2db; font-size: 13px;
+  border: 1px solid var(--line-2); color: var(--ink); font-size: 13px;
 }
 .field::placeholder { color: var(--fainter); }
 textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.5; }
@@ -184,37 +322,59 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 .search svg { position: absolute; left: 11px; color: var(--fainter); pointer-events: none; }
 .search .field { padding-left: 32px; }
 
-.seg { display: inline-flex; align-items: center; gap: 2px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; }
-.seg button { width: 36px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #a39a91; }
-.seg button:hover { background: #231f1c; color: var(--text); }
+/* A stepper is a number line, not a sentence: minus stays left of plus, and
+   the small A left of the big one, in Hebrew as in English. */
+.seg { display: inline-flex; align-items: center; gap: 2px; direction: ltr; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; }
+.seg button { width: 36px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+.seg button:hover { background: var(--hover); color: var(--text); }
 .seg-label { display: flex; flex-direction: column; align-items: center; min-width: 64px; line-height: 1.15; }
 .seg-label small { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: var(--fainter); }
-.seg-label strong { font-family: var(--mono); font-size: 13px; font-weight: 600; color: #a39a91; }
+.seg-label strong { font-family: var(--mono); font-size: 13px; font-weight: 600; color: oklch(var(--hue-lc) var(--h, 62)); }
 .seg-label strong.is-set { color: var(--accent); }
+
+/* Type size: two letters in one chip, clearly different, with air between. */
+.seg-scale { gap: 8px; padding-inline: 8px 10px; }
+.seg-scale button {
+  width: 28px; min-width: 28px;
+  align-items: center; justify-content: center;
+  padding: 0;
+  font-family: var(--display); line-height: 1;
+}
+.seg-scale .scale-down { font-size: 13px; font-weight: 500; color: var(--dim); }
+.seg-scale .scale-up { font-size: 20px; font-weight: 700; color: var(--text); }
 
 .chip {
   height: 34px; padding: 0 14px; border-radius: 9px;
-  border: 1px solid var(--line-2); color: #a39a91;
+  border: 1px solid var(--line-2); color: var(--muted);
   font-size: 12.5px; font-weight: 500;
   display: inline-flex; align-items: center; justify-content: center;
   transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
 }
-.chip:hover { border-color: #5a4f45; }
+.chip:hover { border-color: var(--hover-line); }
 .chip.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-a10); }
 .chip.mono { font-family: var(--mono); height: 28px; padding: 0 11px; font-size: 11.5px; }
-.chip.mono.is-on { border-color: var(--teal); color: var(--teal); background: var(--teal-a10); }
+.chip.mono.is-on { border-color: oklch(var(--hue-lc) var(--h, 62) / var(--hue-edge)); color: oklch(var(--hue-lc) var(--h, 62)); background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill)); }
+
+/* Filter chips sit on one line and scroll sideways — three wrapped rows of
+   them pushed the list itself off a phone screen. */
+.chip-row { display: flex; align-items: center; gap: 7px; padding: 3px 0; overflow-x: auto; scrollbar-width: none; }
+.chip-row::-webkit-scrollbar { display: none; }
+.chip-row > * { flex: 0 0 auto; }
 
 .key-badge {
   font-family: var(--mono); font-size: 11.5px; font-weight: 500;
-  color: var(--teal); background: var(--teal-a10);
+  color: oklch(var(--hue-lc) var(--h, 62)); background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill));
   padding: 3.5px 8px; border-radius: 6px; white-space: nowrap;
 }
+/* Ringed instead of bordered, so the ring costs the row no width. */
+.key-badge.is-twice { box-shadow: inset 0 0 0 1px oklch(var(--hue-lc) var(--h, 62) / 0.35); }
 .tag {
   font-size: 8.5px; font-weight: 700; letter-spacing: 0.1em;
   padding: 2.5px 5px; border-radius: 4px; flex: 0 0 auto; white-space: nowrap;
 }
 .tag-new { color: var(--teal); background: var(--teal-a10); }
 .tag-work { color: var(--warn); background: rgba(199, 154, 92, 0.12); }
+.tag-flat { color: var(--fainter); background: var(--raised); }
 .badge {
   font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em;
   padding: 5px 9px; border-radius: 6px;
@@ -229,7 +389,7 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 }
 .back:hover { color: var(--text-2); }
 
-.progress { height: 5px; border-radius: 99px; background: #211d1b; overflow: hidden; }
+.progress { height: 5px; border-radius: 99px; background: var(--progress-track); overflow: hidden; }
 .progress > i { display: block; height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.3s var(--ease); }
 
 .divider { width: 1px; align-self: stretch; background: var(--line-2); }
@@ -237,42 +397,122 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 /* ---------- calendar ---------- */
 
 .cal-head {
-  display: flex; align-items: flex-end; gap: 16px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 10px;
   padding: 24px 28px 20px;
-  flex-wrap: wrap;
+  padding-inline-end: 168px;
 }
-.cal-title { font-size: 34px; line-height: 1; }
+.cal-head-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.cal-head-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  /* The clip is LTR in both locales so the strip always starts at its left
+     edge; each page carries the reading direction itself. */
+  direction: ltr;
+  /* Room for descenders — the clip is horizontal only. */
+  padding-block: 2px 6px;
+  margin-block: -2px -6px;
+}
+.cal-head-ctl { display: flex; align-items: center; gap: 6px; direction: ltr; }
+.cal-title { font-size: 34px; line-height: 1; white-space: nowrap; }
 .cal-year { font-family: var(--mono); font-size: 19px; color: var(--faint); }
 
-.cal-grid-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0 28px 26px; }
-.cal-dow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; margin-bottom: 8px; }
-.cal-dow span { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; color: var(--fainter); padding-left: 3px; }
+.cal-grid-wrap {
+  /* The gutter is the air between two months while one is being dragged in;
+     the weekday row keeps it too, so the seven columns stay aligned. */
+  --page-gutter: 7px;
+  flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0 28px 26px;
+}
+.cal-dow {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px; margin-bottom: 8px; justify-items: stretch;
+  padding-inline: var(--page-gutter);
+}
+.cal-dow span { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: var(--dim); text-align: start; padding-inline-start: 10px; }
 
-.cal-grid {
-  flex: 1; min-height: 0;
+.cal-viewport {
+  --cal-gap: 7px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  direction: ltr;
+  /* Horizontal drags belong to the month strip; the page keeps the rest. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Three months wide, parked on the middle one. `--p` is the live drag, so
+   the header title and the grid ride exactly the same offset. */
+.cal-track {
+  display: flex;
+  width: 300%;
+  direction: ltr;
+  transform: translate3d(calc((-1 + var(--p, 0)) * 33.3333%), 0, 0);
+  will-change: transform;
+}
+.cal-page { flex: 0 0 33.3333%; min-width: 0; }
+.cal-grid-track { height: 100%; }
+.cal-title-page { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+
+.cal-month {
+  padding-inline: var(--page-gutter);
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(6, minmax(78px, 1fr));
-  gap: 7px;
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: var(--cal-gap);
+  height: 100%;
+}
+.cal-month .day { min-height: 0; height: 100%; }
+
+/* Only while the strip is in motion: a hairline in the gutter so the two
+   months read as separate sheets instead of one long grid. */
+.cal-main.is-dragging .cal-grid-track .cal-page + .cal-page,
+.cal-main.is-settling .cal-grid-track .cal-page + .cal-page {
+  border-left: 1px solid var(--line-3);
+}
+
+.cal-main.is-settling .cal-track {
+  transition: transform var(--slide-ms, 400ms) var(--settle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-main.is-settling .cal-track { transition: none; }
 }
 
 .day {
-  display: flex; flex-direction: column; text-align: left;
+  display: flex; flex-direction: column; text-align: start;
   padding: 9px 10px; border-radius: 11px;
-  background: #131211; border: 1px solid #1e1b19;
+  background: var(--cell); border: 1px solid var(--cell-line);
   transition: background 0.15s ease, border-color 0.15s ease;
   overflow: hidden;
 }
-.day:hover { border-color: #453c35; }
-.day.is-out { background: #100f0e; border-color: #171514; opacity: 0.45; cursor: default; }
-.day.is-out:hover { border-color: #171514; }
+.day:hover { border-color: var(--hover-line); }
+.day.is-out { background: var(--cell-out); border-color: var(--raised); opacity: 0.45; cursor: default; }
+.day.is-out:hover { border-color: var(--raised); }
 .day-top { display: flex; align-items: center; justify-content: space-between; }
-.day-num { font-family: var(--mono); font-size: 12px; color: var(--faint); }
-.day.has-event .day-num { color: #d9d2cb; }
-.day.is-today .day-num { font-weight: 700; color: var(--accent); }
+.day-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 23px; height: 23px; border-radius: 99px;
+  font-family: var(--mono); font-size: 12px; color: var(--faint);
+}
+.day.has-event .day-num { color: var(--ink-soft); }
+/* Today wears the accent as a filled disc — the one mark that reads first. */
+.day.is-today .day-num {
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: 0 2px 10px var(--accent-a35);
+}
 .day-dot { width: 6px; height: 6px; border-radius: 99px; flex: 0 0 auto; }
-.day.has-event .day-dot { background: var(--accent); }
-.day.is-today:not(.has-event) .day-dot { border: 1px solid var(--accent); }
+/* The start time already says the day is booked — and today has its disc. */
+.day.has-event .day-dot,
+.day.is-today .day-dot { display: none; }
 .day-body { margin-top: auto; display: flex; flex-direction: column; gap: 3px; }
 .day-time { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--accent); }
 .day-sub { font-size: 10.5px; color: var(--dim); line-height: 1.25; }
@@ -280,10 +520,8 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 .day.has-event { background: var(--accent-a08); border-color: var(--accent-a22); }
 .day.is-selected { border-color: var(--accent); background: rgba(241, 162, 82, 0.13); }
 .day.kind-s.has-event { background: rgba(53, 194, 199, 0.07); border-color: var(--teal-a20); }
-.day.kind-s .day-dot, .day.kind-s .day-time { background: var(--teal); }
-.day.kind-s .day-time { background: none; color: var(--teal); }
+.day.kind-s .day-time { color: var(--teal); }
 .day.kind-s.is-selected { border-color: var(--teal); background: rgba(53, 194, 199, 0.13); }
-.day.is-tonight .day-dot { box-shadow: 0 0 0 3px var(--accent-a22); }
 
 /* ---------- side panel ---------- */
 
@@ -296,16 +534,23 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 }
 .panel-inner { padding: 24px 22px 30px; display: flex; flex-direction: column; gap: 20px; }
 
-.stat-row { display: flex; border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: #0f0e0d; }
+/* The peek header, its action bar and the scrim only exist once the panel
+   becomes a sheet. */
+.sheet-peek, .sheet-act, .sheet-scrim { display: none; }
+
+.stat-row { display: flex; border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: var(--well); }
 .stat-cell { flex: 1; padding: 12px 14px; }
 .stat-cell + .stat-cell { border-left: 1px solid var(--line); }
 .stat-cell b { display: block; font-family: var(--mono); font-size: 18px; font-weight: 500; }
 .stat-cell span { display: block; font-size: 10.5px; color: var(--faint); margin-top: 2px; }
 
+/* Song notes are written in whichever language the band typed them in — let
+   each one set its own direction instead of inheriting the interface's. */
 .note {
+  unicode-bidi: plaintext;
   font-size: 13px; color: var(--text-2); line-height: 1.6;
-  background: #0f0e0d; border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
+  background: var(--well); border: 1px solid var(--line);
+  border-left: 2px solid oklch(var(--hue-lc) var(--h, 62));
   border-radius: 10px; padding: 13px 14px;
 }
 .note em { font-style: normal; font-weight: 500; color: var(--text); }
@@ -313,7 +558,7 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 .empty {
   display: flex; flex-direction: column; align-items: center; gap: 13px;
   padding: 34px 18px; text-align: center;
-  border: 1px dashed #2b2622; border-radius: 14px;
+  border: 1px dashed var(--empty-line); border-radius: 14px;
 }
 .empty p { margin: 0; font-size: 13px; color: var(--faint); line-height: 1.55; max-width: 240px; }
 .empty-plain { border: 0; padding: 70px 20px; }
@@ -329,7 +574,7 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 }
 .mini-row:hover { background: var(--raised-2); }
 .mini-num { font-family: var(--mono); font-size: 11px; color: var(--fainter); width: 14px; text-align: right; flex: 0 0 auto; }
-.mini-title { font-size: 13px; font-weight: 500; color: #e8e2db; }
+.mini-title { font-size: 13px; font-weight: 500; color: var(--ink); }
 .mini-sub { font-size: 10.5px; color: var(--faint); margin-top: 1px; }
 .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .grow { min-width: 0; flex: 1; }
@@ -338,18 +583,30 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 
 .screen-head {
   padding: 22px 34px 20px;
+  padding-inline-end: 168px;
   border-bottom: 1px solid var(--raised-2);
-  background: #111010;
+  background: var(--bar);
   flex: 0 0 auto;
 }
 .screen-title { font-size: 38px; line-height: 1; letter-spacing: -0.03em; }
-.meta-row { display: flex; align-items: center; gap: 11px; font-size: 13.5px; color: #a39a91; flex-wrap: wrap; }
-.meta-row .sep { color: #3a332e; }
+.meta-row { display: flex; align-items: center; gap: 11px; font-size: 13.5px; color: var(--muted); flex-wrap: wrap; }
+.meta-row .sep { color: var(--line-3); }
 .meta-row .strong { font-family: var(--mono); color: var(--text); font-weight: 500; }
+
+.head-actions { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+.set-progress { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.set-progress span { font-size: 11px; color: var(--faint); }
+.set-progress b { font-family: var(--mono); color: var(--text); font-weight: 600; }
+.set-progress .progress { width: 150px; }
+
+.reh-head { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+.reh-head-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.reh-kind { display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--faint); }
+.reh-ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 
 .set-head {
   display: grid; gap: 12px; align-items: center;
-  grid-template-columns: 38px 1fr 62px 74px 58px 40px;
+  grid-template-columns: 38px 1fr 62px 74px 58px auto;
   padding: 0 12px 8px;
   border-bottom: 1px solid var(--raised-2);
 }
@@ -358,66 +615,90 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 
 .set-row {
   display: grid; gap: 12px; align-items: center;
-  grid-template-columns: 38px 1fr 62px 74px 58px 40px;
+  grid-template-columns: 38px 1fr 62px 74px 58px auto;
   padding: 11px 12px; border-radius: 11px;
   border-top: 1.5px solid transparent;
+  border-bottom: 1.5px solid transparent;
   transition: background 0.13s ease;
-  width: 100%; text-align: left;
+  width: 100%; text-align: start;
 }
 .set-row:hover { background: var(--raised); }
 .set-row.is-dragging { opacity: 0.35; }
-.set-row.is-over { background: var(--accent-a08); border-top-color: var(--accent); }
-.set-row.is-done .set-title { color: var(--dim); }
-.set-row.is-done .set-num { color: var(--fainter); }
+.set-row.is-over { border-top-color: var(--accent); }
+.set-row.is-over-after { border-bottom-color: var(--accent); }
+
+.set-tempo { display: flex; align-items: center; gap: 7px; }
+.tempo-dot { width: 5px; height: 5px; border-radius: 99px; background: oklch(var(--hue-lc) var(--h, 62)); }
+.set-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.set-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 20px 34px 0; }
 
 .set-num { font-family: var(--mono); font-size: 12.5px; font-weight: 500; color: var(--dim); width: 20px; text-align: right; }
-.set-title { font-size: 14.5px; font-weight: 500; letter-spacing: -0.005em; }
+/* Tags never squeeze the title out of the row — it truncates, they clip. */
+.title-line { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; }
+.set-title { font-size: 14.5px; font-weight: 500; letter-spacing: -0.005em; flex: 1 1 auto; min-width: 5em; }
+.title-line .set-artist { flex: 0 1 auto; }
 .set-artist { font-size: 11.5px; color: var(--faint); }
-.set-note { font-size: 11.5px; color: #7d6a52; }
+.set-note { font-size: 11.5px; color: var(--warn); }
 .set-bpm { font-family: var(--mono); font-size: 12px; color: var(--dim); }
-.set-bpm i { font-style: normal; color: #463f39; }
+.set-bpm i { font-style: normal; color: var(--fainter); }
 .set-dur { font-family: var(--mono); font-size: 12px; color: var(--faint); text-align: right; }
 
+.set-lead { display: flex; align-items: center; gap: 2px; }
 .grip { display: flex; color: var(--fainter); cursor: grab; margin-left: -4px; opacity: 0; transition: opacity 0.13s ease; }
-.set-row:hover .grip { opacity: 1; }
+.set-row:hover .grip, .set-row:focus-within .grip { opacity: 1; }
 .grip:active { cursor: grabbing; }
+.grip:disabled { cursor: default; }
 
-.kill { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--fainter); opacity: 0; transition: opacity 0.13s ease, color 0.13s ease; }
-.set-row:hover .kill { opacity: 1; }
-.kill:hover { color: var(--bad); }
-
-.check {
-  width: 26px; height: 26px; border-radius: 99px;
+.move {
+  width: 26px; height: 22px; border-radius: 6px;
+  border: 1px solid var(--line-2); color: var(--faint);
   display: flex; align-items: center; justify-content: center;
-  border: 1.5px solid var(--line-3); color: transparent;
-  transition: border-color 0.14s ease, background 0.14s ease, color 0.14s ease;
-  flex: 0 0 auto;
 }
-.check:hover { border-color: #6b6058; }
-.check.is-on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.move:hover:not(:disabled) { color: var(--text); border-color: var(--hover-line); }
+.move:disabled { opacity: 0.35; cursor: default; }
+
+.kill {
+  height: 28px; padding: 0 8px; border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  font-size: 11.5px; font-weight: 500; color: var(--bad); white-space: nowrap;
+  border: 1px solid rgba(228, 112, 90, 0.45);
+  transition: background 0.13s ease, border-color 0.13s ease;
+}
+.kill:hover { background: rgba(228, 112, 90, 0.1); border-color: var(--bad); }
+
+.ghost.danger { color: var(--bad); border-color: rgba(228, 112, 90, 0.3); }
+.ghost.danger:hover { background: rgba(228, 112, 90, 0.1); border-color: var(--bad); color: var(--bad); }
 
 .att-row { display: flex; align-items: center; gap: 11px; padding: 7px 4px; }
 .att-status { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 5px; }
 .att-status.in { color: var(--good); background: rgba(155, 196, 106, 0.1); }
 .att-status.late { color: var(--warn); background: rgba(199, 154, 92, 0.1); }
+.att-status.out { color: var(--bad); background: rgba(228, 112, 90, 0.1); }
+.att-status.unset { color: var(--fainter); background: var(--raised); }
+button.att-status { transition: filter 0.14s ease; }
+button.att-status:hover { filter: brightness(1.3); }
 
 /* ---------- song ---------- */
 
-.song-head { padding: 22px 34px 18px; border-bottom: 1px solid var(--raised-2); background: #111010; flex: 0 0 auto; }
+.song-head { padding: 22px 34px 18px; padding-inline-end: 168px; border-bottom: 1px solid var(--raised-2); background: var(--bar); flex: 0 0 auto; }
+.song-body { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+.song-head .back { margin-bottom: 13px; }
 .song-title { font-size: 36px; line-height: 1; }
 .track-num { font-family: var(--mono); font-size: 16px; color: var(--fainter); }
 
-.meta-card {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 9px 14px; border-radius: 10px;
-  background: var(--surface-2); border: 1px solid var(--line);
-  min-width: 78px;
-}
-.meta-card small { font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; color: var(--fainter); }
-.meta-card b { font-family: var(--mono); font-size: 17px; font-weight: 500; }
-.meta-card.key b { color: var(--teal); font-weight: 600; }
+.song-headline { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.song-title-row { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.song-facts { font-size: 13.5px; color: var(--dim); row-gap: 4px; }
+.song-bpm { display: inline-flex; align-items: center; gap: 6px; }
 
-.tick { width: 7px; height: 7px; border-radius: 99px; background: var(--accent); animation: tick 1s ease-out infinite; }
+/* Two groups on one line: the controls that hold a value, then the ones that
+   are simply on or off. */
+.song-ctl { display: flex; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.ctl-group, .ctl-toggles { display: flex; align-items: center; gap: 10px; }
+.song-ctl .ghost { height: 36px; }
+.chord-pills { margin-inline-start: auto; display: flex; align-items: center; gap: 7px; }
+
+.tick { width: 7px; height: 7px; border-radius: 99px; background: oklch(var(--hue-lc) var(--h, 62)); animation: tick 1s ease-out infinite; }
 @keyframes tick {
   0% { transform: scale(1); opacity: 0.35; }
   12% { transform: scale(1.9); opacity: 1; }
@@ -428,55 +709,138 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 
-.chart { max-width: 780px; margin: 0 auto; padding: 30px 34px 90px; }
-.chart-section { margin-bottom: 30px; padding-left: 18px; border-left: 2px solid #211d1b; }
+.chart {
+  max-width: 780px; margin: 0 auto; padding: 30px 34px 90px;
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+  --stage-mult: 1;
+  --lyric-size: calc(20px * var(--sc, 1) * var(--stage-mult));
+  --chord-size: calc(13.5px * var(--sc, 1) * var(--stage-mult));
+  --chord-row: calc(var(--chord-row-base, 18px) * var(--sc, 1) * var(--stage-mult));
+  --line-gap: calc(12px * var(--sc, 1) * var(--stage-mult));
+}
+.chart-section { margin-bottom: 30px; padding-left: 18px; border-left: 2px solid var(--progress-track); scroll-margin-top: 14px; }
 .chart-section.accent { border-left-color: var(--accent-a35); }
-.chart-label { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.chart-label { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; padding-inline-end: 7.5rem; }
 .chart-label span { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
 .chart-section.accent .chart-label span { color: var(--accent); }
 .chart-label small { font-family: var(--mono); font-size: 10px; color: var(--fainter); }
 
+/* Section jump sits in the empty corner of the first label, then sticks
+   there while the chart moves — the old structure list lived under the
+   lyrics, a whole scroll away from the parts it named. */
+.chart-jump {
+  position: sticky;
+  top: 10px;
+  z-index: 8;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  margin-bottom: -36px;
+}
+.chart-jump-inner {
+  position: relative;
+  pointer-events: auto;
+}
+.chart-jump-btn {
+  height: 34px;
+  padding: 0 11px 0 13px;
+  background: var(--bg);
+  box-shadow: 0 0 0 6px var(--bg);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.chart-jump-btn svg {
+  flex: 0 0 auto;
+  transition: transform 0.16s var(--ease);
+}
+.chart-jump-btn.is-on svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .chart-jump-btn svg { transition: none; }
+}
+.chart-jump-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 216px;
+  max-height: min(70vh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 16px 36px var(--scrim);
+  z-index: 9;
+}
+.chart-jump-menu .struct-row { cursor: pointer; }
+.chart-jump-menu .struct-row:focus-visible { outline-offset: -2px; }
+
 .line { margin: 0 0 var(--line-gap, 12px); }
 .line.chords-only { margin-bottom: calc(var(--line-gap, 12px) * 0.6); }
-.seg { display: inline-block; vertical-align: bottom; }
-.seg .c {
+/* One chord stacked over the lyric fragment it lands on. */
+.chord-seg { display: inline-block; vertical-align: bottom; }
+.chord-seg .c {
   display: block;
   font-family: var(--mono);
   font-size: var(--chord-size, 13.5px);
   font-weight: 700; letter-spacing: -0.01em;
-  color: var(--accent);
+  color: oklch(var(--hue-lc) var(--h, 62));
   height: var(--chord-row, 18px);
   line-height: var(--chord-row, 18px);
 }
-.seg .t {
+.chord-seg .t {
   display: block; white-space: pre;
   font-size: var(--lyric-size, 20px);
-  line-height: 1.28; color: #ece6df; letter-spacing: -0.008em;
+  line-height: 1.28; color: var(--ink); letter-spacing: -0.008em;
 }
 /* A chord wider than the syllable under it must not collide with the next one. */
-.seg .c { padding-right: 0.7em; }
+.chord-seg .c { padding-right: 0.7em; }
 
 /* Chord-only lines (intro, outro, turnarounds) have no lyric to space them out. */
-.line.chords-only .seg .t { display: none; }
-.line.chords-only .seg .c {
+.line.chords-only .chord-seg .t { display: none; }
+.line.chords-only .chord-seg .c {
   font-size: calc(var(--chord-size, 13.5px) * 1.25);
   height: calc(var(--chord-row, 18px) * 1.4);
   line-height: calc(var(--chord-row, 18px) * 1.4);
   padding-right: 1.7em;
 }
 
+.song-nextbar { direction: ltr; }
+.song-nextbar .grow { text-align: start; min-width: 0; }
+
+.chord-pill {
+  font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+  padding: 4px 9px; border-radius: 6px;
+  color: oklch(var(--hue-lc) var(--h, 62)); background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill));
+  border: 1px solid oklch(var(--hue-lc) var(--h, 62) / var(--hue-edge));
+}
+
 .chart-end { display: flex; align-items: center; justify-content: center; gap: 12px; padding-top: 10px; }
-.chart-end i { display: block; width: 26px; height: 1px; background: #2b2622; }
+.chart-end i { display: block; width: 26px; height: 1px; background: var(--empty-line); }
 .chart-end span { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; color: var(--fainter); }
 
-.is-stage { background: #0a0a09; }
-.is-stage .chart { max-width: 1180px; column-count: 2; column-gap: 64px; padding-top: 34px; }
+/* Phone-only: on stage the header is replaced by a floating cluster. */
+.stage-bar { display: none; }
+
+.is-stage { background: var(--bg); }
+.is-stage .chart { max-width: 1180px; column-count: 2; column-gap: 64px; padding-top: 34px; --stage-mult: 1.3; }
 .is-stage .chart-section { break-inside: avoid; -webkit-column-break-inside: avoid; padding-left: 0; border-left: 0; }
+.is-stage .chart-jump {
+  position: relative;
+  top: auto;
+  margin-bottom: 12px;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
 @media (max-width: 1100px) { .is-stage .chart { column-count: 1; } }
 
 .aside {
   width: 296px; flex: 0 0 296px;
-  border-left: 1px solid var(--raised-2); background: #111010;
+  border-left: 1px solid var(--raised-2); background: var(--bar);
   padding: 24px 20px; display: flex; flex-direction: column; gap: 24px;
   overflow-y: auto;
 }
@@ -486,15 +850,35 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 .struct-row .dot { width: 6px; height: 6px; border-radius: 99px; background: var(--line-3); flex: 0 0 auto; }
 .struct-row.hot .dot { background: var(--accent); }
 .struct-row span { font-size: 12.5px; color: var(--text-2); flex: 1; }
-.struct-row small { font-family: var(--mono); font-size: 10.5px; color: var(--fainter); }
+.struct-row small { font-family: var(--mono); font-size: 10.5px; color: var(--fainter); unicode-bidi: plaintext; }
 
 /* ---------- library ---------- */
 
-.lib-head { display: grid; gap: 14px; align-items: center; grid-template-columns: 46px 1fr 64px 76px 62px 118px 34px; padding: 14px 34px 9px; border-bottom: 1px solid var(--raised-2); }
+.lib-screen-head { padding-inline-end: 168px; }
+.lib-top {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.lib-title-row { min-width: 0; }
+.lib-tools {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-inline-start: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.lib-tools .search { flex: 1; min-width: 0; }
+.lib-tools .search .field { width: 100%; min-width: 0; height: 36px; max-width: 250px; }
+.lib-tools .btn { flex: 0 0 auto; }
+
+.lib-head { display: grid; gap: 14px; align-items: center; grid-template-columns: 46px 1fr 76px 62px 118px 34px; padding: 14px 34px 9px; border-bottom: 1px solid var(--raised-2); }
 .lib-head span { font-size: 9.5px; font-weight: 600; letter-spacing: 0.13em; color: var(--fainter); }
 .lib-head .right { text-align: right; }
 
-.lib-row { display: grid; gap: 14px; align-items: center; grid-template-columns: 46px 1fr 64px 76px 62px 118px 34px; padding: 9px 14px; border-radius: 11px; width: 100%; text-align: left; transition: background 0.13s ease; }
+.lib-row { display: grid; gap: 14px; align-items: center; grid-template-columns: 46px 1fr 76px 62px 118px 34px; padding: 9px 14px; border-radius: 11px; width: 100%; text-align: start; transition: background 0.13s ease; }
 .lib-row:hover { background: var(--raised); }
 .art {
   width: 42px; height: 42px; border-radius: 9px;
@@ -503,21 +887,22 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
   font-family: var(--mono); font-size: 12px; font-weight: 700;
   letter-spacing: -0.02em; color: var(--faint); flex: 0 0 auto;
 }
-.art.own { background: var(--accent-a08); border-color: var(--accent-a16); color: var(--accent); }
+.art.own { background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill)); border-color: oklch(var(--hue-lc) var(--h, 62) / var(--hue-edge)); color: oklch(var(--hue-lc) var(--h, 62)); }
+.lib-row:hover .art { border-color: var(--line-3); }
 .go { display: flex; justify-content: flex-end; color: var(--accent); opacity: 0; transition: opacity 0.13s ease; }
 .lib-row:hover .go { opacity: 1; }
 
 /* ---------- toast ---------- */
 
 .toast {
-  position: fixed; left: 50%; bottom: 28px; z-index: 60;
+  position: fixed; left: 50%; bottom: 28px; z-index: 80;
   display: flex; align-items: center; gap: 11px;
-  background: #1f1c1a; border: 1px solid #322c28; border-radius: 11px;
-  padding: 11px 16px; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  background: var(--raised-2); border: 1px solid var(--line-3); border-radius: 11px;
+  padding: 11px 16px; box-shadow: 0 12px 34px var(--lift);
   animation: toast-in 0.24s var(--ease) both;
 }
 .toast .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--accent); flex: 0 0 auto; }
-.toast p { margin: 0; font-size: 13px; color: #e8e2db; }
+.toast p { margin: 0; font-size: 13px; color: var(--ink); }
 .toast button { font-size: 12.5px; font-weight: 600; color: var(--accent); }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 .toast { transform: translateX(-50%); }
@@ -537,14 +922,18 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 @media (max-width: 900px) {
   .app { flex-direction: column; }
   .rail { display: none; }
+  .app-body { flex: 1; min-height: 0; }
 
   .main { flex: 1; min-height: 0; }
 
   .tabbar {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-around;
     flex: 0 0 auto;
-    background: #111010; border-top: 1px solid var(--raised-2);
+    background: var(--bar); border-top: 1px solid var(--raised-2);
     padding: 8px 22px calc(18px + env(safe-area-inset-bottom));
+    /* The tabs stand above the day's dimming, next to the action bar: an open
+       day is still only a day, and the songs are always one tap away. */
+    position: relative; z-index: 70;
   }
   .tab {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -552,67 +941,607 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
     font-size: 10px; font-weight: 500;
   }
   .tab.is-active { color: var(--accent); font-weight: 600; }
-  .fab {
-    width: 52px; height: 52px; border-radius: 16px;
-    background: var(--accent); color: var(--accent-ink);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 6px 20px var(--accent-a22);
+
+  /* On a phone the day panel lifts out of the column and becomes a bottom
+     sheet: the month grid keeps the whole screen, and the sheet peeks over it
+     with the selected day. Tapping the peek expands it to the full detail. */
+  .cal-main { flex: 1; min-height: 0; }
+  /* On the phone the month is a sheet in both directions — sideways for the
+     month, up and down for the day — so the browser is given neither axis. */
+  .cal-main, .cal-viewport, .sheet-scrim, .sheet-act, .tabbar { touch-action: none; }
+
+  .sheet-scrim {
+    display: block; position: fixed; inset: 0; z-index: 60;
+    background: var(--scrim);
+    animation: scrim-in 0.18s ease;
   }
+
+  /* The day's dimming is not a state that appears — it rides the sheet the way
+     the header rides the month strip. `--sheet` is how far open the day is
+     (0..1) while a finger owns it; let go, the class holds the end it landed
+     on and both move off on the one clock. */
+  .day-scrim {
+    animation: none;
+    opacity: var(--sheet, 0);
+    pointer-events: none;
+  }
+  .day-scrim.is-on { opacity: var(--sheet, 1); pointer-events: auto; }
 
   .panel {
-    width: 100%; flex: 1 1 auto; border-left: 0;
-    border-top: 1px solid var(--line);
+    display: flex;
+    position: fixed; left: 0; right: 0; bottom: calc(var(--tabbar-h) + var(--act-h));
+    width: auto; flex: none; z-index: 65;
+    max-height: var(--peek-h);
+    overflow: hidden;
+    border-left: 0; border-top: 1px solid var(--line-2);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -16px 40px var(--lift);
   }
-  .panel-inner { padding: 18px 16px 24px; }
+  .panel.is-open { max-height: calc(74vh - var(--act-h)); overflow-y: auto; overscroll-behavior: contain; }
+  /* The height belongs to the finger, and after it to the settle in the
+     screen's own script — the stylesheet only holds the two ends. */
+  .panel.is-grabbing { overflow: hidden; }
 
-  .cal-head { padding: 18px 16px 12px; gap: 12px; }
+  .sheet-peek {
+    display: block; flex: 0 0 auto; width: 100%;
+    height: var(--peek-h); padding: 8px 16px 0;
+    position: sticky; top: 0; z-index: 2;
+    background: var(--surface);
+    border-radius: 18px 18px 0 0;
+    /* The header is a handle: drag it up to open the day, down to shut it.
+       Nothing in it is selectable — a stray selection would let the browser
+       start its own drag and cancel ours halfway. */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* The action sits on the tab bar, under the sheet and outside it: the day
+     can be dragged open, shut or swiped past and the button never moves. */
+  .sheet-act {
+    display: block; position: fixed; left: 0; right: 0;
+    bottom: var(--tabbar-h); z-index: 66;
+    height: var(--act-h); padding: 11px 16px;
+    background: var(--surface);
+  }
+  /* With that bar always in reach, the day's own closing button says the
+     same thing twice. */
+  .panel-cta { display: none; }
+  .sheet-grip {
+    display: block; width: 44px; height: 5px; margin: 0 auto 10px;
+    border-radius: 99px; background: var(--line-3);
+    transition: background 0.15s ease;
+  }
+  .panel.is-grabbing .sheet-grip { background: var(--faint); }
+  .sheet-peek-row {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    text-align: start; color: var(--faint);
+  }
+  .sheet-peek-main { flex: 1; min-width: 0; }
+  .sheet-peek-day {
+    display: block; font-family: var(--display); font-weight: 700;
+    font-size: 16px; letter-spacing: -0.02em; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sheet-peek-sub {
+    display: block; margin-top: 2px; font-size: 11.5px; color: var(--dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel.is-open .sheet-peek { border-bottom: 1px solid var(--line); }
+
+  .panel-inner { padding: 6px 16px 24px; }
+  /* The sticky sheet header already names the day — don't say it twice.
+     !important because these blocks carry inline layout styles. */
+  .panel-head { display: none !important; }
+
+  /* Two deliberate rows beat a header that wraps differently per month. */
+  .cal-head { padding: 18px 16px 12px; padding-inline-end: 160px; gap: 8px; }
+  .cal-head-ctl { flex: 1; }
   .cal-title { font-size: 26px; }
   .cal-year { font-size: 15px; }
-  .cal-grid-wrap { padding: 0 12px 10px; flex: 0 0 auto; }
-  .cal-grid { grid-template-rows: repeat(6, 46px); gap: 2px; }
+  .cal-grid-wrap { padding: 0 6px calc(var(--peek-h) + var(--act-h) + 12px); flex: 1; min-height: 0; --page-gutter: 6px; }
+  .cal-viewport { --cal-gap: 2px; }
   .cal-dow { gap: 2px; }
-  .cal-dow span { text-align: center; padding-left: 0; font-size: 9.5px; }
+  .cal-dow span { text-align: center; padding-inline-start: 0; font-size: 11px; letter-spacing: 0; }
   .day { align-items: center; justify-content: center; gap: 3px; padding: 0; border-radius: 11px; background: transparent; border-color: transparent; }
   .day.has-event { background: transparent; border-color: transparent; }
+  /* Otherwise the greyed-out neighbours are the only cells with a box. */
+  .day.is-out { background: transparent; border-color: transparent; }
   .day.is-selected { background: var(--raised-2); border-color: var(--accent); }
   .day.kind-s.is-selected { border-color: var(--teal); }
   .day-top { flex-direction: column; gap: 3px; width: 100%; }
-  .day-num { font-size: 13px; }
-  .day-body { display: none; }
+  .day-num { font-size: 13px; min-width: 26px; height: 26px; }
+  /* A tall cell can carry the start time, which beats a bare dot. */
+  .day-body { display: flex; margin-top: 4px; align-items: center; }
+  .day-sub { display: none; }
+  .day-time { font-size: 11px; }
   .day-dot { width: 5px; height: 5px; }
 
-  .screen-head, .song-head { padding: 16px 18px 14px; }
+  /* Right-floated header actions wrap to a lonely second row on a phone;
+     let them span it instead. */
+  .head-actions { width: 100%; margin-left: 0; flex-direction: column; align-items: stretch; gap: 12px; }
+  .head-actions .btn { width: 100%; }
+  .set-progress { flex-direction: row; align-items: center; gap: 10px; }
+  .set-progress .progress { width: auto; flex: 1; }
+  /* Leave room for the NEEDS WORK tag instead of clipping it. */
+  .set-title { min-width: 0; }
+
+  /* The toggles sit over the top corner, but only the back link runs along
+     them. A gutter down the whole header left the title, the facts and the
+     buttons about 200px to share, and they came out as a vertical staircase. */
+  .screen-head, .song-head { padding: 16px 18px 14px; padding-inline-end: 18px; }
+  .screen-head .back { padding-inline-end: 148px; }
+  .lib-screen-head { padding-inline-end: 18px; }
+  .lib-title-row { padding-inline-end: 148px; }
+  .lib-tools { width: 100%; margin-inline-start: 0; }
+  .lib-tools .search .field { max-width: none; }
+  .app-toggles { top: calc(10px + env(safe-area-inset-top)); inset-inline-end: 12px; }
+
+  /* Only the back link sits beside the toggles, so only it steps around them.
+     The old gutter ran the height of the header and left the title, the cards
+     and the controls fighting over 212px — the controls came out as a
+     staircase and the song took 40% of the screen before a single lyric. */
+  .song-head { padding: 14px 18px 12px; padding-inline-end: 18px; }
+  .song-head .back { padding-inline-end: 148px; margin-bottom: 10px; }
   .screen-title { font-size: 27px; }
   .song-title { font-size: 26px; }
 
+  /* Two matching rows of three: the A pair stays together inside its
+     cell, chords and the remaining toggles take the same width, and the
+     key and the spelled-out note share the wider last cell. */
+  .song-ctl { flex-direction: column; align-items: stretch; gap: 8px; margin-top: 14px; }
+  .song-ctl .btn-label { display: none; }
+  .ctl-group,
+  .ctl-toggles {
+    display: grid;
+    grid-template-columns: minmax(7.8rem, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+  .ctl-toggles:not(:has(> :nth-child(3))) {
+    grid-template-columns: minmax(7.8rem, 1.5fr) minmax(0, 1fr);
+  }
+  .ctl-toggles:not(:has(.ctl-note)) {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  }
+  .ctl-toggles .ghost { height: 42px; padding: 0; }
+  .ctl-toggles .ctl-note { padding: 0 12px; }
+  .ctl-toggles .ctl-note .btn-label { display: inline; }
+  .song-ctl .seg-key { justify-content: space-between; order: 1; min-width: 0; }
+  .song-ctl .ctl-chords { height: 42px; padding: 0; order: 2; min-width: 0; }
+  .song-ctl .seg-scale { width: max-content; max-width: 100%; justify-self: end; order: 3; }
+  .song-ctl .seg button { width: 32px; height: 34px; }
+  .song-ctl .seg-scale button { width: 28px; height: 34px; }
+  .song-ctl .seg-label { min-width: 44px; }
+
   .aside { display: none; }
+  /* The band note and the set progress are not a wide-screen luxury: on a
+     phone they come back under the chart, on the page's one scroll, instead
+     of vanishing with the sidebar. A song with none of them keeps the
+     sidebar hidden rather than ending on an empty strip — the shortcuts
+     hint is the only thing left, and it is for keyboards. */
+  .song-body { flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
+  .song-body .scroll { flex: 1 0 auto; overflow: visible; }
+  .song-body .aside:has(> div), .song-body .aside:has(> button) {
+    display: flex; width: auto; flex: 0 0 auto; overflow: visible;
+    border-left: 0; border-top: 1px solid var(--raised-2);
+    padding: 20px 18px 26px; gap: 22px;
+  }
+  .aside.is-sheet {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+    width: auto !important; flex: none !important; max-height: 76vh; z-index: 70;
+    overscroll-behavior: contain;
+    border-left: 0; border-top: 1px solid var(--line-2);
+    border-radius: 16px 16px 0 0;
+    padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 -18px 44px var(--scrim);
+  }
   .chart { padding: 22px 18px 24px; max-width: none; }
   .chart-section { padding-left: 0; border-left: 0; margin-bottom: 26px; }
+  .chart-jump { top: 8px; margin-bottom: -40px; }
+  .chart-jump-btn { height: 38px; }
+
+  /* Stage mode takes the whole phone: no header, no tab bar, bigger type
+     and the chart running edge to edge. */
+  .is-stage .song-head { display: none; }
+  .app:has(.is-stage) .tabbar { display: none; }
+  .is-stage .chart { padding: 56px 12px 48px; --stage-mult: 1.5; }
+  .is-stage .chart-section { margin-bottom: 30px; }
+
+  .stage-bar {
+    display: flex; align-items: center; gap: 3px;
+    position: fixed; top: calc(8px + env(safe-area-inset-top)); right: 10px; z-index: 70;
+    padding: 4px; border-radius: 13px;
+    background: var(--bar); border: 1px solid var(--line-2);
+    box-shadow: 0 10px 28px var(--scrim);
+  }
+  .stage-bar button {
+    width: 38px; height: 38px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--dim);
+  }
+  .stage-bar button.is-on { color: var(--accent); background: var(--accent-a10); }
 
   .set-head, .lib-head { display: none; }
+
+  /* The day header stays and the setlist scrolls under it, the way the
+     library and the song do. Letting the whole page scroll as one put the
+     header — and the toggles' own footing — on the move, so the corner read
+     as adrift. The header is 264px, and the setlist still gets ~500. */
+  .set-wrap { padding: 18px 16px 0; }
+  .set-wrap .scroll { padding-bottom: 26px; }
+
   .set-row {
-    grid-template-columns: 1fr auto;
-    grid-template-areas: 'body check';
+    grid-template-columns: 30px 1fr auto;
+    grid-template-areas: 'lead body actions';
     gap: 12px; padding: 13px 14px; border-radius: 13px;
     background: var(--raised); border: 1px solid var(--line);
     border-top: 1.5px solid var(--line);
     margin-bottom: 6px;
   }
-  .set-row.is-done { background: #131211; }
-  .set-row > .set-lead { display: none; }
+  .set-row > .set-lead { grid-area: lead; flex-direction: column; gap: 2px; }
+  /* Sixteen bordered boxes on one screen shouted louder than the songs. */
+  .set-row .move { width: 28px; height: 24px; border: 0; color: var(--fainter); }
+  .set-row .move:disabled { opacity: 0.25; }
   .set-row > .set-body { grid-area: body; }
   .set-row > .set-key, .set-row > .set-tempo, .set-row > .set-time { display: none; }
-  .set-row > .set-actions { grid-area: check; }
-  .set-row .kill { display: none; }
-  .check { width: 44px; height: 44px; margin: -8px -6px -8px 0; }
+  .set-row > .set-actions { grid-area: actions; }
+  .set-row .kill { width: auto; height: 36px; padding: 0 10px; font-size: 12.5px; }
+  /* Tempo and key are one token each — never break them across lines. */
+  .title-line .mono, .title-line .key-badge { white-space: nowrap; flex: 0 0 auto; }
 
-  .lib-row { grid-template-columns: 46px 1fr auto; gap: 12px; padding: 10px 12px; }
+  .lib-row { grid-template-columns: 46px 1fr; gap: 12px; padding: 10px 12px; }
   .lib-row > .lib-tempo, .lib-row > .lib-time, .lib-row > .lib-last, .lib-row > .go { display: none; }
 
-  .toast { left: 16px; right: 16px; bottom: 84px; transform: none; }
+  .toast { left: 16px; right: 16px; bottom: calc(var(--tabbar-h) + 12px); transform: none; }
   @keyframes toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
   .hide-sm { display: none !important; }
 }
 
 @media (min-width: 901px) { .show-sm { display: none !important; } }
+
+[dir="rtl"] {
+  --ui: 'Heebo', 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+[dir="rtl"] .rail { border-right: 0; border-left: 1px solid var(--line); }
+[dir="rtl"] .nav-count { margin-left: 0; margin-inline-start: auto; }
+[dir="rtl"] .rail-section .eyebrow { padding-left: 0; padding-inline-start: 8px; }
+[dir="rtl"] .stat-value { margin-left: 0; margin-inline-start: auto; }
+[dir="rtl"] .avatar + .avatar { margin-left: 0; margin-inline-start: -8px; }
+[dir="rtl"] .search svg { left: auto; right: 11px; }
+[dir="rtl"] .search .field { padding-left: 12px; padding-right: 32px; }
+[dir="rtl"] .head-actions { margin-left: 0; margin-inline-start: auto; }
+[dir="rtl"] .grip { margin-left: 0; margin-inline-start: -4px; }
+[dir="rtl"] .panel { border-left: 0; border-right: 1px solid var(--line); }
+[dir="rtl"] .stat-cell + .stat-cell { border-left: 0; border-right: 1px solid var(--line); }
+[dir="rtl"] .note { border-left: 0; border-right: 2px solid oklch(var(--hue-lc) var(--h, 62)); }
+[dir="rtl"] .back svg,
+[dir="rtl"] .go svg,
+[dir="rtl"] svg[data-icon="arrow"] { transform: scaleX(-1); }
+[dir="rtl"] .cal-head-ctl { justify-content: flex-end; }
+
+.lang-toggle {
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  flex: 0 0 auto;
+  color: var(--text-2);
+}
+
+.lang-track {
+  position: relative;
+  display: block;
+  width: 72px;
+  height: 32px;
+  border-radius: 99px;
+  border: 1px solid var(--line-2);
+  background: var(--raised);
+  overflow: hidden;
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.lang-toggle:hover .lang-track { border-color: var(--hover-line); }
+
+.lang-mark {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+.lang-mark-he { left: 9px; opacity: 0; }
+.lang-mark-en { right: 9px; opacity: 0.4; }
+
+.lang-toggle.is-en .lang-mark-he { opacity: 0.4; }
+.lang-toggle.is-en .lang-mark-en { opacity: 0; }
+
+.lang-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 34px;
+  height: 24px;
+  border-radius: 99px;
+  background: var(--raised-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  transition:
+    left 0.42s cubic-bezier(0.34, 1.3, 0.64, 1),
+    background 0.35s ease,
+    color 0.28s ease,
+    box-shadow 0.35s ease;
+}
+
+.lang-toggle.is-en .lang-knob {
+  left: 33px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 1px 4px var(--accent-a35);
+}
+
+.shell-rail { view-transition-name: shell-rail; }
+.lib-rail { view-transition-name: lib-rail; }
+.cal-main { view-transition-name: cal-main; }
+.cal-head { view-transition-name: cal-head; }
+.cal-grid-wrap { view-transition-name: cal-grid; }
+.panel { view-transition-name: day-panel; }
+.tabbar { view-transition-name: tabbar; }
+.reh-main { view-transition-name: reh-main; }
+.main:not(.cal-main):not(.reh-main) { view-transition-name: page-main; }
+.aside { view-transition-name: page-aside; }
+.screen-head { view-transition-name: screen-head; }
+.song-head { view-transition-name: song-head; }
+
+::view-transition-group(*) {
+  animation-duration: 0.56s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-locale-slide="ltr"]::view-transition-old(*) {
+  animation: locale-out-ltr 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html[data-locale-slide="ltr"]::view-transition-new(*) {
+  animation: locale-in-ltr 0.56s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html[data-locale-slide="rtl"]::view-transition-old(*) {
+  animation: locale-out-rtl 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html[data-locale-slide="rtl"]::view-transition-new(*) {
+  animation: locale-in-rtl 0.56s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+::view-transition-old(cal-grid),
+::view-transition-new(cal-grid) { animation-delay: 0.04s; }
+::view-transition-old(day-panel),
+::view-transition-new(day-panel),
+::view-transition-old(page-aside),
+::view-transition-new(page-aside) { animation-delay: 0.08s; }
+::view-transition-old(tabbar),
+::view-transition-new(tabbar) { animation-delay: 0.06s; }
+
+@keyframes locale-out-ltr {
+  to { opacity: 0; transform: translateX(18%); }
+}
+@keyframes locale-in-ltr {
+  from { opacity: 0; transform: translateX(-18%); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes locale-out-rtl {
+  to { opacity: 0; transform: translateX(-18%); }
+}
+@keyframes locale-in-rtl {
+  from { opacity: 0; transform: translateX(18%); }
+  to { opacity: 1; transform: none; }
+}
+
+html.locale-slide-play[data-locale-slide="ltr"] .shell-rail,
+html.locale-slide-play[data-locale-slide="ltr"] .lib-rail,
+html.locale-slide-play[data-locale-slide="ltr"] .main,
+html.locale-slide-play[data-locale-slide="ltr"] .panel,
+html.locale-slide-play[data-locale-slide="ltr"] .aside,
+html.locale-slide-play[data-locale-slide="ltr"] .tabbar {
+  animation: locale-in-ltr 0.56s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html.locale-slide-play[data-locale-slide="rtl"] .shell-rail,
+html.locale-slide-play[data-locale-slide="rtl"] .lib-rail,
+html.locale-slide-play[data-locale-slide="rtl"] .main,
+html.locale-slide-play[data-locale-slide="rtl"] .panel,
+html.locale-slide-play[data-locale-slide="rtl"] .aside,
+html.locale-slide-play[data-locale-slide="rtl"] .tabbar {
+  animation: locale-in-rtl 0.56s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-track,
+  .lang-mark,
+  .lang-knob {
+    transition: none;
+  }
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  html.locale-slide-play .shell-rail,
+  html.locale-slide-play .lib-rail,
+  html.locale-slide-play .main,
+  html.locale-slide-play .panel,
+  html.locale-slide-play .aside,
+  html.locale-slide-play .tabbar {
+    animation: none;
+  }
+}
+
+.theme-toggle {
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  flex: 0 0 auto;
+  color: var(--text-2);
+}
+
+.theme-track {
+  position: relative;
+  display: block;
+  width: 58px;
+  height: 32px;
+  border-radius: 99px;
+  border: 1px solid var(--line-2);
+  background: var(--raised);
+  overflow: hidden;
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.theme-toggle:hover .theme-track { border-color: var(--hover-line); }
+
+.theme-toggle.is-light .theme-track {
+  background: var(--accent-a10);
+  border-color: var(--accent-a35);
+}
+
+.theme-mark {
+  position: absolute;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+.theme-mark-moon {
+  inset-inline-start: 8px;
+  fill: currentColor;
+  opacity: 0;
+}
+
+.theme-mark-sun {
+  inset-inline-end: 8px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.35;
+}
+
+.theme-toggle.is-light .theme-mark-moon { opacity: 0.4; }
+.theme-toggle.is-light .theme-mark-sun { opacity: 0; }
+
+.theme-knob {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 99px;
+  background: var(--raised-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  display: grid;
+  place-items: center;
+  transition:
+    inset-inline-start 0.42s cubic-bezier(0.34, 1.3, 0.64, 1),
+    background 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.theme-toggle.is-light .theme-knob {
+  inset-inline-start: 29px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 1px 4px var(--accent-a35);
+}
+
+.theme-knob .theme-icon {
+  grid-area: 1 / 1;
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transition: opacity 0.22s ease, transform 0.42s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.theme-knob .theme-moon {
+  fill: currentColor;
+  stroke: none;
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.theme-knob .theme-sun {
+  opacity: 0;
+  transform: rotate(-80deg) scale(0.4);
+}
+
+.theme-toggle.is-light .theme-knob .theme-moon {
+  opacity: 0;
+  transform: rotate(70deg) scale(0.4);
+}
+
+.theme-toggle.is-light .theme-knob .theme-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-track,
+  .theme-mark,
+  .theme-knob,
+  .theme-knob .theme-icon,
+  .lang-track,
+  .lang-mark,
+  .lang-knob {
+    transition: none;
+  }
+}
+
+@keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- the band note, met on the way in ----------
+   Walking into a song opens its note over the chart; the header keeps a
+   button that hands it back. The author's hue rides the top edge, the way
+   it rides the note in the aside. */
+
+.note-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  padding: 22px;
+  background: var(--scrim);
+  animation: scrim-in 0.18s ease;
+}
+.note-pop {
+  width: min(430px, 100%);
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 17px 18px 18px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-top: 2px solid oklch(var(--hue-lc) var(--h, 62));
+  box-shadow: 0 18px 44px var(--scrim);
+  animation: note-in 0.24s var(--settle) both;
+}
+.note-pop:focus { outline: none; }
+.note-pop-head { display: flex; align-items: center; gap: 12px; }
+.note-pop-head .eyebrow { flex: 1; min-width: 0; }
+.note-pop-body {
+  unicode-bidi: plaintext;
+  margin: 0; font-size: 14px; line-height: 1.65; color: var(--text-2);
+}
+.note-pop-by { display: flex; align-items: center; gap: 8px; padding-inline-start: 2px; }
+
+@keyframes note-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .note-scrim, .note-pop { animation: none; }
+}

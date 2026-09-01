@@ -12,11 +12,11 @@ cd app
 npm install
 npm run dev      # http://127.0.0.1:5174
 npm run build
-npm test         # renders every route + 30 logic checks
+npm test         # renders every route + 49 logic checks
 ```
 
-React 18 + Vite + React Router, no backend — scheduling state persists to
-`localStorage`.
+React 18 + Vite + React Router, no backend — the schedule and any songs the band
+adds persist to `localStorage`. The rail's "Reset demo data" puts it all back.
 
 ## What's here
 
@@ -33,10 +33,10 @@ The generated canvas bundle itself is not committed — reseed it from `design/`
 
 | Route | |
 | --- | --- |
-| `/` | Month calendar; pick a day, or book a rehearsal in the side panel |
-| `/rehearsal/:date` | The setlist — drag to reorder, tick off what you've run |
+| `/` | Month calendar; pick a day, then book, open or read it in the day panel |
+| `/rehearsal/:date` | The setlist — drag to reorder, tick off what you've run, edit or delete the booking |
 | `/song/:id` | Chords over lyrics, with transpose, text sizing and stage mode |
-| `/songs` | The library, filtered by collection and key |
+| `/songs` | The library, filtered by collection and key; new songs are added here |
 
 ## Demo content
 

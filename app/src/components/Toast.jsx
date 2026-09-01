@@ -1,8 +1,10 @@
 import React from 'react';
 import { useStore } from '../store.jsx';
+import { useI18n } from '../i18n/index.js';
 
 export function Toast() {
   const { toast, dismissToast, dispatch } = useStore();
+  const { t } = useI18n();
   if (!toast) return null;
 
   return (
@@ -12,11 +14,11 @@ export function Toast() {
       {toast.undo && (
         <button
           onClick={() => {
-            dispatch({ type: 'restore', events: toast.undo });
+            dispatch({ type: 'restore', ...toast.undo });
             dismissToast();
           }}
         >
-          Undo
+          {t('toast.undo')}
         </button>
       )}
     </div>

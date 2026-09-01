@@ -1,50 +1,94 @@
-export const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-export const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-export const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+import { DEFAULT_LOCALE } from '../i18n/constants.js';
+import he from '../i18n/he.js';
+import en from '../i18n/en.js';
+
+const packs = { he, en };
+
+function pack(locale) {
+  return packs[locale === 'en' ? 'en' : DEFAULT_LOCALE].dates;
+}
+
+export const MONTHS = he.dates.months;
+export const MONTHS_SHORT = he.dates.monthsShort;
+export const WEEKDAYS = he.dates.weekdays;
 
 const pad = (n) => (n < 10 ? '0' + n : String(n));
 
 export const iso = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
 
 export function parseISO(s) {
-  const [y, m, d] = s.split('-').map(Number);
+  const [y, m, d] = String(s).split('-').map(Number);
   return { y, m: m - 1, d };
 }
 
-export function weekdayOf(s) {
+/** True for a real calendar date written as YYYY-MM-DD. */
+export function isISODate(s) {
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
   const { y, m, d } = parseISO(s);
-  return WEEKDAYS[new Date(Date.UTC(y, m, d)).getUTCDay()];
+  if (m < 0 || m > 11 || d < 1) return false;
+  return d <= new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
 }
 
-/** "August 29" */
-export function longDate(s) {
+export function monthName(m, locale = DEFAULT_LOCALE) {
+  return pack(locale).months[m];
+}
+
+export function weekdayOf(s, locale = DEFAULT_LOCALE) {
+  const { y, m, d } = parseISO(s);
+  return pack(locale).weekdays[new Date(Date.UTC(y, m, d)).getUTCDay()];
+}
+
+/** "August 29" / "29 באוגוסט" style — month name + day */
+export function longDate(s, locale = DEFAULT_LOCALE) {
   const { m, d } = parseISO(s);
-  return `${MONTHS[m]} ${d}`;
+  const month = pack(locale).months[m];
+  return locale === 'he' ? `${d} ב${month}` : `${month} ${d}`;
 }
 
 /** "Aug 29" */
-export function shortDate(s) {
+export function shortDate(s, locale = DEFAULT_LOCALE) {
   const { m, d } = parseISO(s);
-  return `${MONTHS_SHORT[m]} ${d}`;
+  return `${pack(locale).monthsShort[m]} ${d}`;
+}
+
+export function dowLabels(locale = DEFAULT_LOCALE) {
+  const d = pack(locale);
+  return { full: d.dow, short: d.dowShort };
+}
+
+const DAY_MS = 86400000;
+export const WEEK_MS = 7 * DAY_MS;
+
+/** Sunday 00:00 UTC of the week that contains the 1st of the month. */
+export function monthWeekStart(y, m) {
+  const first = new Date(Date.UTC(y, m, 1)).getUTCDay();
+  return Date.UTC(y, m, 1) - first * DAY_MS;
+}
+
+/** How many Sunday-weeks lie between the two month grids (signed). */
+export function weekOffset(fromY, fromM, toY, toM) {
+  return Math.round((monthWeekStart(toY, toM) - monthWeekStart(fromY, fromM)) / WEEK_MS);
+}
+
+/** `weekCount` Sunday-first weeks starting at `weekStart`, focused on one month. */
+export function cellsFromWeekStart(weekStart, weekCount, focusY, focusM) {
+  const cells = [];
+  const n = weekCount * 7;
+  for (let i = 0; i < n; i++) {
+    const dt = new Date(weekStart + i * DAY_MS);
+    const y = dt.getUTCFullYear();
+    const mo = dt.getUTCMonth();
+    const d = dt.getUTCDate();
+    const id = iso(y, mo, d);
+    const inMonth = y === focusY && mo === focusM;
+    cells.push({ key: id, inMonth, label: d, date: inMonth ? id : null });
+  }
+  return cells;
 }
 
 /** 42 cells covering the month grid, Sunday-first. */
 export function monthGrid(y, m) {
-  const first = new Date(Date.UTC(y, m, 1)).getUTCDay();
-  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  const daysInPrev = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const cells = [];
-  for (let i = 0; i < 42; i++) {
-    const n = i - first + 1;
-    const inMonth = n >= 1 && n <= daysInMonth;
-    cells.push({
-      key: i,
-      inMonth,
-      label: inMonth ? n : n < 1 ? daysInPrev + n : n - daysInMonth,
-      date: inMonth ? iso(y, m, n) : null
-    });
-  }
-  return cells;
+  return cellsFromWeekStart(monthWeekStart(y, m), 6, y, m);
 }
 
 export function addMonths(y, m, delta) {
@@ -60,22 +104,26 @@ export function mmss(sec) {
 }
 
 /** 2319 -> "39 min" */
-export function runtime(sec) {
+export function runtime(sec, locale = DEFAULT_LOCALE) {
   const mins = Math.round(sec / 60);
-  if (mins < 60) return `${mins} min`;
-  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  const d = pack(locale);
+  if (mins < 60) return d.min.replace('{n}', String(mins));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return d.hoursMin.replace('{h}', String(h)).replace('{m}', String(m));
 }
 
-/** Human distance from today, e.g. "in 4 days" / "Tonight" */
-export function relative(dateStr, today) {
-  if (dateStr === today) return 'Tonight';
+/** Human distance from today */
+export function relative(dateStr, today, locale = DEFAULT_LOCALE) {
+  const d = pack(locale);
+  if (dateStr === today) return d.tonight;
   const a = parseISO(dateStr);
   const b = parseISO(today);
   const days = Math.round(
     (Date.UTC(a.y, a.m, a.d) - Date.UTC(b.y, b.m, b.d)) / 86400000
   );
-  if (days === 1) return 'Tomorrow';
-  if (days === -1) return 'Yesterday';
-  if (days > 0) return `in ${days} days`;
-  return `${-days} days ago`;
+  if (days === 1) return d.tomorrow;
+  if (days === -1) return d.yesterday;
+  if (days > 0) return d.inDays.replace('{n}', String(days));
+  return d.daysAgo.replace('{n}', String(-days));
 }

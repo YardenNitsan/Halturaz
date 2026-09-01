@@ -37,3 +37,10 @@ export function chordsUsed(sections, steps = 0) {
   }
   return seen;
 }
+
+/** Pitch class of a root name, 0–11 from C ("Bb" -> 10). -1 if it isn't one. */
+export function pitchClass(name) {
+  const m = /^([A-G][#b]?)/.exec(name || '');
+  if (!m) return -1;
+  return SHARP.indexOf(ALIAS[m[1]] || m[1]);
+}

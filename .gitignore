@@ -10,3 +10,6 @@ yarn-error.log*
 
 # Generated design canvas bundle (2.6 MB); reseed it from design/ instead.
 rehearsal-manager.html
+
+# Generated smoke audit screenshots
+app/smoke/phone/

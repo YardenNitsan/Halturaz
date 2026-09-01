@@ -7,7 +7,7 @@ import { StoreProvider } from '../src/store.jsx';
 export function render(path) {
   return renderToString(
     <MemoryRouter initialEntries={[path]}>
-      <StoreProvider>
+      <StoreProvider initialLocale="en">
         <App />
       </StoreProvider>
     </MemoryRouter>

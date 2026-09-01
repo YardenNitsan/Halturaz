@@ -6,13 +6,16 @@ const { render } = await import('./dist/entry.js');
 
 const routes = [
   ['/',                          ['August', 'Static Bloom', 'TONIGHT', 'Open rehearsal']],
-  ['/songs',                     ['Songs', 'Copper Line', 'Collections', 'Come Together']],
-  ['/rehearsal/2026-08-29',      ['Rehearsal — August 29', 'Setlist', '19:00', 'Studio 9', 'Half Past Nowhere']],
-  ['/rehearsal/2026-09-05',      ['Show — September 5', 'Levontin 7', 'SHOW']],
-  ['/rehearsal/2026-12-01',      ['Nothing is booked']],
-  ['/song/copper-line?from=2026-08-29', ['Copper Line', 'TRANSPOSE', 'Hold the note', 'Structure', 'Band note']],
+  ['/songs',                     ['Songs', 'Copper Line', 'Collections', 'Come Together', 'New song']],
+  ['/rehearsal/2026-08-29',      ['August 29', 'REHEARSAL', 'Setlist', '19:00', 'Studio 9', 'Half Past Nowhere']],
+  ['/rehearsal/2026-09-05',      ['September 5', 'Levontin 7', 'SHOW']],
+  ['/rehearsal/2026-12-01',      ['Nothing is booked', 'Book a rehearsal']],
+  ['/rehearsal/not-a-date',      ['is not a date on the calendar', 'Back to the calendar']],
+  ['/song/copper-line?from=2026-08-29', ['Copper Line', '>KEY<', 'Hold the note', 'Structure', 'Band note']],
   ['/song/room-12',              ['Room 12', 'No chart for Room 12 yet']],
-  ['/song/nope',                 ['isn']]
+  ['/song/nope',                 ['isn']],
+  ['/song/copper-line?from=not-a-date', ['Copper Line', '>Songs<']],
+  ['/song/northbound?from=2026-08-29',  ['Stage mode', 'Up next']]
 ];
 
 let fail = 0;

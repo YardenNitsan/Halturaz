@@ -18,6 +18,8 @@ export function Icon({ name, size = 17, ...rest }) {
       </>
     ),
     left: <path d="M14.5 5.5 8 12l6.5 6.5" strokeWidth="2" />,
+    up: <path d="M5.5 14.5 12 8l6.5 6.5" strokeWidth="2" />,
+    down: <path d="M5.5 9.5 12 16l6.5-6.5" strokeWidth="2" />,
     right: <path d="M9.5 5.5 16 12l-6.5 6.5" strokeWidth="2" />,
     plus: <path d="M12 5.5v13M5.5 12h13" strokeWidth="2.2" />,
     minus: <path d="M5.5 12h13" strokeWidth="2.2" />,
@@ -31,9 +33,22 @@ export function Icon({ name, size = 17, ...rest }) {
     ),
     arrow: <path d="M5 12h13M12.5 6l6 6-6 6" strokeWidth="2" />,
     lines: <path d="M4 7h16M4 12h16M4 17h10" strokeWidth="1.9" />,
+    note: (
+      <>
+        <path d="M4.6 6.2A2.2 2.2 0 0 1 6.8 4h10.4a2.2 2.2 0 0 1 2.2 2.2v7.6a2.2 2.2 0 0 1-2.2 2.2H9.6l-4.1 3.4a.55.55 0 0 1-.9-.42z" />
+        <path d="M8.4 8.6h7.2M8.4 11.9h4.4" />
+      </>
+    ),
     expand: <path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15" strokeWidth="1.9" />,
     more: null,
-    trash: <path d="M5 7h14M10 7V5.2h4V7M8 7l.8 12h6.4L16 7" strokeWidth="1.8" />
+    trash: <path d="M5 7h14M10 7V5.2h4V7M8 7l.8 12h6.4L16 7" strokeWidth="1.8" />,
+    sun: (
+      <>
+        <circle cx="12" cy="12" r="3.6" />
+        <path d="M12 3.4v2.2M12 18.4v2.2M3.4 12h2.2M18.4 12h2.2M5.8 5.8l1.6 1.6M16.6 16.6l1.6 1.6M5.8 18.2l1.6-1.6M16.6 7.4l1.6-1.6" />
+      </>
+    ),
+    moon: <path d="M15.4 4.6A7.4 7.4 0 1 0 19.4 15 6.2 6.2 0 0 1 15.4 4.6z" />
   };
 
   if (name === 'play') {
@@ -66,7 +81,7 @@ export function Icon({ name, size = 17, ...rest }) {
   }
 
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...P} {...rest}>
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden data-icon={name} {...P} {...rest}>
       {paths[name]}
     </svg>
   );
