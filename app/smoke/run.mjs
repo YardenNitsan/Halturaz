@@ -6,7 +6,7 @@ const { render } = await import('./dist/entry.js');
 
 const routes = [
   ['/',                          ['August', 'Static Bloom', 'TONIGHT', 'Open rehearsal']],
-  ['/songs',                     ['Songs', 'Copper Line', 'Collections', 'Come Together', 'New song']],
+  ['/songs',                     ['Songs', 'Copper Line', 'Collections', 'Come Together', 'Import online']],
   ['/rehearsal/2026-08-29',      ['August 29', 'REHEARSAL', 'Setlist', '19:00', 'Studio 9', 'Half Past Nowhere']],
   ['/rehearsal/2026-09-05',      ['September 5', 'Levontin 7', 'SHOW']],
   ['/rehearsal/2026-12-01',      ['Nothing is booked', 'Book a rehearsal']],

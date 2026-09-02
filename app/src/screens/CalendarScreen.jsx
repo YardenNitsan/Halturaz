@@ -410,6 +410,7 @@ export default function CalendarScreen() {
       h0,
       ...sheetSpan(),
       axis: null,
+      slop: 0,
       flying,
       content,
       top: panel.current.scrollTop,
@@ -460,6 +461,11 @@ export default function CalendarScreen() {
       if (d.axis !== 'y') return;
       sheetDragged.current = true;
       setGrabbing('y');
+      // The pixels the lock spent working out which way the finger was going
+      // are not the sheet's to travel: it sets off from where the finger
+      // crossed, not from where it landed, or it leaps the whole threshold in
+      // its first frame.
+      d.slop = dy;
       // Going up, the sheet takes its open shape straight away — the height
       // below is set in the same beat, so it never flashes to full.
       if (dy < 0) setOpen(true);
@@ -469,7 +475,7 @@ export default function CalendarScreen() {
     if (dt > 0) d.v = (e.clientY - d.y) / dt;
     d.y = e.clientY;
     d.t = e.timeStamp;
-    const h = Math.max(d.shut, Math.min(d.tall, d.h0 - dy));
+    const h = Math.max(d.shut, Math.min(d.tall, d.h0 - (dy - d.slop)));
     panel.current.style.maxHeight = h + 'px';
     scrim.current?.style.setProperty('--sheet', String((h - d.shut) / (d.tall - d.shut)));
   }

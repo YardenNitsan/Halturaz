@@ -163,20 +163,12 @@ export default function LibraryScreen() {
                 />
               </div>
               <button
-                className="ghost lib-import-btn"
+                className="btn"
                 aria-expanded={importing}
                 onClick={() => { setCreating(false); setImporting(true); }}
               >
                 <Icon name="globe" size={15} />
                 {t('import.button')}
-              </button>
-              <button
-                className="btn"
-                aria-expanded={creating}
-                onClick={() => { setImporting(false); setDraft(BLANK); setCreating((v) => !v); }}
-              >
-                <Icon name="plus" size={15} />
-                {t('library.newSong')}
               </button>
             </div>
           </div>
