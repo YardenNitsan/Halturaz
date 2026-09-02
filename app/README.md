@@ -28,9 +28,11 @@ a page of its own.
 ```
 src/
   data.js               demo content (band, songs, charts, schedule)
-  store.jsx             one reducer + context; the schedule and any songs the
-                        band adds persist to localStorage — charts stay code-owned
+  store.jsx             one reducer + context; the schedule, any songs the band
+                        adds and any chart it re-aligns persist to localStorage
   lib/chords.js         transpose, including slash chords and flat spellings
+  lib/chordEdit.js      a chart line as one lyric plus chords anchored to
+                        characters of it — read, move, write back
   lib/dates.js          month grids, formatting, relative dates
   components/           Shell (nav), Icon, Toast
   screens/              Calendar, Rehearsal, Song, Library
@@ -116,11 +118,36 @@ transform moves by a whole page, the pixels do not move at all.
 | `[` `]` | text size |
 | `C` | chords on/off |
 | `F` | stage mode |
+| `E` | align chords — then `←` `→` walk the chord in hand one character |
 | `J` `K` | next / previous song in the set |
 | `D` | mark the song reviewed in the set it came from |
 | `Esc` | leave stage mode, then back to the rehearsal |
 
 Shift and caps lock don't matter — the letter keys are matched case-insensitively.
+
+## Aligning chords
+
+A chart is stored as the fragments the chords cut a line into — a chord and the
+words sung under it. That shape prints well and moves badly: nudging one chord
+one letter means rewriting two fragments. So the pencil beside **Structure**
+reads every line back into what it really is — one lyric, and a list of chords
+each anchored at a character of it — and hands you the anchors.
+
+Pick a chord up by tapping it; the words it owns underline in its colour. Then
+tap the exact letter it should sit over, or walk it a character at a time with
+the arrows in the bar. Nothing is dragged: on a phone a finger is wider than a
+syllable, and a tap on a letter is the precise move a drag only approximates.
+The words, the sections and the bar counts are never touched.
+
+On a Hebrew line the words run right to left while the chord row still runs left
+to right, so "one character earlier" is the arrow pointing *right* — the bar
+turns itself around to match the line holding the chord.
+
+Saving is undoable from the toast, and the edit outlives a reload: a re-aligned
+chart is kept beside the shipped one and laid back over it on the next load.
+`smoke/logic.mjs` asserts that reading and writing every shipped chart hands
+back the very same chart, so opening the editor and saving can never quietly
+rewrite the library.
 
 ## Demo content
 

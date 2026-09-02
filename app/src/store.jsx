@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react';
-import { EVENTS, SONGS, TODAY } from './data.js';
+import React, { createContext, useContext, useReducer, useEffect, useRef, useCallback, useMemo } from 'react';
+import { EVENTS, SONGS, TODAY, ROOMS } from './data.js';
+import { isDeletableSong } from './lib/songs.js';
+import { freezeUndo } from './lib/undo.js';
+import { createLogger } from './lib/logger.js';
+
+const log = createLogger('store');
+
+const TOAST_MS = 5000;
+const TOAST_UNDO_MS = 12000;
 import { DEFAULT_LOCALE } from './i18n/constants.js';
 import { applyDocumentLocale } from './i18n/translate.js';
 import { DEFAULT_THEME, applyDocumentTheme } from './theme.js';
@@ -10,10 +18,33 @@ const StoreCtx = createContext(null);
 const initial = (locale = DEFAULT_LOCALE, theme = DEFAULT_THEME) => ({
   events: EVENTS,
   songs: SONGS,
+  rooms: [],
   toast: null,
   locale,
   theme
 });
+
+/** A room the band typed in. Trimmed, and only if it isn't already on the list. */
+const isNewRoom = (name, rooms) => {
+  const v = String(name || '').trim();
+  if (!v) return false;
+  return !ROOMS.concat(rooms).some((r) => r.toLowerCase() === v.toLowerCase());
+};
+
+/** Enough of a chart to draw without printing `undefined` over a lyric. */
+const isSections = (v) =>
+  Array.isArray(v) &&
+  v.every(
+    (sec) =>
+      !!sec &&
+      typeof sec.label === 'string' &&
+      Array.isArray(sec.lines) &&
+      sec.lines.every(
+        (line) =>
+          Array.isArray(line) &&
+          line.every((seg) => !!seg && (typeof seg.c === 'string' || typeof seg.t === 'string'))
+      )
+  );
 
 /** Enough of a song to render a row without printing NaN at anyone. */
 const isSong = (s) =>
@@ -36,15 +67,36 @@ function load(initialLocale) {
     const custom = (Array.isArray(saved.custom) ? saved.custom : [])
       .filter(isSong)
       .filter((s) => !SONGS.some((o) => o.id === s.id))
-      .map((s) => ({ ...s, sections: [], custom: true }));
+      .map((s) => ({
+        ...s,
+        sections: Array.isArray(s.sections) ? s.sections : [],
+        custom: true
+      }));
+    /* Charts are code-owned, but a chart the band has re-aligned is theirs —
+       keep the edit and lay it back over the shipped song on the next load. */
+    const charts = saved.charts && typeof saved.charts === 'object' ? saved.charts : {};
+    // Rooms the band added themselves; the three shipped ones always stay.
+    const rooms = (Array.isArray(saved.rooms) ? saved.rooms : [])
+      .map((r) => String(r).trim())
+      .filter((r, i, all) => r && all.indexOf(r) === i && !ROOMS.includes(r));
+    const edited = SONGS.map((s) =>
+      isSections(charts[s.id]) ? { ...s, sections: charts[s.id], chartEdited: true } : s
+    );
+    log.info('loaded from localStorage', {
+      custom: custom.length,
+      titles: custom.map((s) => s.title),
+      charts: edited.filter((s) => s.chartEdited).length
+    });
     return {
       events: saved.events && typeof saved.events === 'object' ? saved.events : EVENTS,
-      songs: SONGS.concat(custom),
+      songs: edited.concat(custom),
+      rooms,
       toast: null,
       locale,
       theme
     };
-  } catch {
+  } catch (e) {
+    log.warn('load failed, using defaults', { error: e.message });
     return initial(initialLocale || DEFAULT_LOCALE);
   }
 }
@@ -52,11 +104,14 @@ function load(initialLocale) {
 export function reducer(state, action) {
   switch (action.type) {
     case 'create-rehearsal': {
-      const { date, time, place, note, kind } = action;
+      const { date, time, end, place, kind } = action;
       if (!date || state.events[date]) return state;
       return {
         ...state,
-        events: { ...state.events, [date]: { kind: kind || 'r', time, place, note: note || '', songs: [], done: [] } }
+        events: {
+          ...state.events,
+          [date]: { kind: kind || 'r', time, end: end || '', place, songs: [], done: [] }
+        }
       };
     }
 
@@ -70,6 +125,13 @@ export function reducer(state, action) {
       const ev = state.events[action.date];
       if (!ev) return state;
       return { ...state, events: { ...state.events, [action.date]: { ...ev, ...action.patch } } };
+    }
+
+    /* The list of rooms is the band's, not the app's — anywhere they play
+       once is somewhere they can book again. */
+    case 'add-room': {
+      if (!isNewRoom(action.name, state.rooms)) return state;
+      return { ...state, rooms: [...state.rooms, String(action.name).trim()] };
     }
 
     case 'set-attendance': {
@@ -119,14 +181,36 @@ export function reducer(state, action) {
     }
 
     case 'add-to-library': {
-      if (!isSong(action.song) || state.songs.some((s) => s.id === action.song.id)) return state;
-      return { ...state, songs: [...state.songs, { ...action.song, sections: [], custom: true }] };
+      if (!isSong(action.song)) {
+        log.warn('add-to-library rejected: invalid song', action.song);
+        return state;
+      }
+      if (state.songs.some((s) => s.id === action.song.id)) {
+        log.warn('add-to-library rejected: duplicate id', { id: action.song.id });
+        return state;
+      }
+      const sections = Array.isArray(action.song.sections) ? action.song.sections : [];
+      log.info('add-to-library', {
+        id: action.song.id,
+        title: action.song.title,
+        artist: action.song.artist,
+        sections: sections.length,
+        source: action.song.importSource
+      });
+      return {
+        ...state,
+        songs: [...state.songs, { ...action.song, sections, custom: true, needsWork: action.song.needsWork ?? !sections.length }]
+      };
     }
 
     /** Only songs the band added here can be deleted — code-owned ones stay. */
     case 'remove-from-library': {
       const song = state.songs.find((s) => s.id === action.songId);
-      if (!song || !song.custom) return state;
+      if (!isDeletableSong(song)) {
+        log.warn('remove-from-library rejected', { songId: action.songId, found: !!song });
+        return state;
+      }
+      log.info('remove-from-library', { id: song.id, title: song.title, artist: song.artist });
       const events = {};
       for (const [date, ev] of Object.entries(state.events)) {
         events[date] = ev.songs.includes(action.songId)
@@ -140,12 +224,38 @@ export function reducer(state, action) {
       return { ...state, songs: state.songs.filter((s) => s.id !== action.songId), events };
     }
 
-    case 'restore':
+    /* Only the chord anchors move — the words, the sections and the bar counts
+       are the ones the chart was written with. */
+    case 'edit-chart': {
+      if (!isSections(action.sections)) {
+        log.warn('edit-chart rejected: invalid sections', { songId: action.songId });
+        return state;
+      }
+      if (!state.songs.some((s) => s.id === action.songId)) {
+        log.warn('edit-chart rejected: unknown song', { songId: action.songId });
+        return state;
+      }
+      log.info('edit-chart', { id: action.songId, sections: action.sections.length });
       return {
         ...state,
-        events: action.events || state.events,
-        songs: action.songs || state.songs
+        songs: state.songs.map((s) =>
+          s.id === action.songId ? { ...s, sections: action.sections, chartEdited: true } : s
+        )
       };
+    }
+
+    case 'restore': {
+      const nextEvents = action.events ?? state.events;
+      const nextSongs = (action.songs ?? state.songs).map((s) =>
+        isDeletableSong(s) ? { ...s, custom: true } : s
+      );
+      log.info('restore undo', {
+        songs: nextSongs.length,
+        custom: nextSongs.filter((s) => s.custom).length,
+        hadEvents: !!action.events
+      });
+      return { ...state, events: nextEvents, songs: nextSongs };
+    }
 
     case 'toast':
       return { ...state, toast: action.toast };
@@ -182,36 +292,70 @@ export function StoreProvider({ children, initialLocale }) {
 
   useEffect(() => {
     try {
+      const custom = state.songs.filter((s) => isDeletableSong(s));
+      // A custom song carries its own chart; a shipped one only needs the diff.
+      const charts = {};
+      for (const s of state.songs) {
+        if (s.chartEdited && !isDeletableSong(s)) charts[s.id] = s.sections;
+      }
       localStorage.setItem(
         KEY,
         JSON.stringify({
           events: state.events,
-          custom: state.songs.filter((s) => s.custom),
+          custom,
+          charts,
+          rooms: state.rooms,
           locale: state.locale,
           theme: state.theme
         })
       );
+      log.debug('persisted', {
+        custom: custom.length,
+        charts: Object.keys(charts).length,
+        total: state.songs.length
+      });
     } catch {
       /* private mode — the session still works, it just won't persist */
     }
-  }, [state.events, state.songs, state.locale, state.theme]);
+  }, [state.events, state.songs, state.rooms, state.locale, state.theme]);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
+  const toastRef = useRef(null);
+
   // Named `notify`, not `toast`: the context also carries the toast *state*.
-  const notify = useCallback((message, undo) => {
+  const armToastTimer = useCallback((ms) => {
     clearTimeout(timer.current);
-    dispatch({ type: 'toast', toast: { message, undo, id: Date.now() } });
-    timer.current = setTimeout(() => dispatch({ type: 'toast', toast: null }), 4500);
+    timer.current = setTimeout(() => dispatch({ type: 'toast', toast: null }), ms);
   }, []);
+
+  const notify = useCallback((message, undo) => {
+    const frozen = freezeUndo(undo);
+    const payload = { message, undo: frozen, id: Date.now() };
+    toastRef.current = payload;
+    dispatch({ type: 'toast', toast: payload });
+    armToastTimer(frozen ? TOAST_UNDO_MS : TOAST_MS);
+  }, [armToastTimer]);
 
   const dismissToast = useCallback(() => {
     clearTimeout(timer.current);
+    toastRef.current = null;
     dispatch({ type: 'toast', toast: null });
   }, []);
 
+  const holdToast = useCallback(() => clearTimeout(timer.current), []);
+
+  const releaseToast = useCallback(() => {
+    if (!toastRef.current) return;
+    armToastTimer(toastRef.current.undo ? TOAST_UNDO_MS : TOAST_MS);
+  }, [armToastTimer]);
+
+  useEffect(() => {
+    toastRef.current = state.toast;
+  }, [state.toast]);
+
   return (
-    <StoreCtx.Provider value={{ ...state, dispatch, notify, dismissToast, today: TODAY }}>
+    <StoreCtx.Provider value={{ ...state, dispatch, notify, dismissToast, holdToast, releaseToast, today: TODAY }}>
       {children}
     </StoreCtx.Provider>
   );
@@ -226,6 +370,12 @@ export const useStore = () => {
 export function useSong(id) {
   const { songs } = useStore();
   return songs.find((s) => s.id === id) || null;
+}
+
+/** The three shipped rooms, then whatever the band added. */
+export function useRooms() {
+  const { rooms } = useStore();
+  return useMemo(() => ROOMS.concat(rooms), [rooms]);
 }
 
 /** Sorted [date, event] pairs. */

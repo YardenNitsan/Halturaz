@@ -31,8 +31,21 @@ export function Icon({ name, size = 17, ...rest }) {
         <path d="M16 16l4.5 4.5" strokeWidth="2" />
       </>
     ),
+    globe: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M3.5 12h17M12 3.5a14 14 0 0 1 0 17M12 3.5a14 14 0 0 0 0 17" />
+      </>
+    ),
     arrow: <path d="M5 12h13M12.5 6l6 6-6 6" strokeWidth="2" />,
     lines: <path d="M4 7h16M4 12h16M4 17h10" strokeWidth="1.9" />,
+    /* A capo: the bar clamped across the strings. */
+    capo: (
+      <>
+        <path d="M6 3v18M12 3v18M18 3v18" strokeWidth="1.3" />
+        <rect x="2.6" y="9.4" width="18.8" height="4.2" rx="2.1" fill="currentColor" stroke="none" />
+      </>
+    ),
     note: (
       <>
         <path d="M4.6 6.2A2.2 2.2 0 0 1 6.8 4h10.4a2.2 2.2 0 0 1 2.2 2.2v7.6a2.2 2.2 0 0 1-2.2 2.2H9.6l-4.1 3.4a.55.55 0 0 1-.9-.42z" />
@@ -42,6 +55,12 @@ export function Icon({ name, size = 17, ...rest }) {
     expand: <path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15" strokeWidth="1.9" />,
     more: null,
     trash: <path d="M5 7h14M10 7V5.2h4V7M8 7l.8 12h6.4L16 7" strokeWidth="1.8" />,
+    pencil: (
+      <>
+        <path d="M16.2 4.4a2 2 0 0 1 2.8 2.8L8.6 17.6 4.5 19l1.4-4.1z" strokeWidth="1.7" />
+        <path d="M14.6 6l3.4 3.4" strokeWidth="1.7" />
+      </>
+    ),
     sun: (
       <>
         <circle cx="12" cy="12" r="3.6" />

@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon.jsx';
-import { useStore } from '../store.jsx';
+import { useStore, useRooms } from '../store.jsx';
 import { useI18n } from '../i18n/index.js';
-import { ROOMS, TIMES } from '../data.js';
 import {
   monthName,
   monthGrid,
@@ -12,10 +11,12 @@ import {
   longDate,
   weekdayOf,
   runtime,
+  timeSpan,
   relative,
   dowLabels
 } from '../lib/dates.js';
 import { hue } from '../lib/hues.js';
+import { songKey } from '../lib/chords.js';
 
 /* The month strip is a three-page carousel: previous, current, next. It rides
    the finger 1:1 and then settles onto whichever page the swipe was pulling
@@ -31,6 +32,23 @@ const SWIPE_SPEED = 0.4;
 const SHEET_RATIO = 0.3;
 /* The curve everything lands on, the stylesheet's `--settle` in JavaScript. */
 const SETTLE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+/* A booking has two ends. The second one is offered rather than demanded: it
+   follows the start until someone sets it by hand, and it can be cleared. */
+const DEFAULT_HOURS = 3;
+
+function shift(time, hours) {
+  const [h, m] = String(time).split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return '';
+  const at = (h + hours) % 24;
+  return `${String(at).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/** Move the start, and bring an untouched end along with it. */
+function withStart(draft, time) {
+  const following = !draft.end || draft.end === shift(draft.time, DEFAULT_HOURS);
+  return { ...draft, time, end: following ? shift(time, DEFAULT_HOURS) : draft.end };
+}
 
 function reduceMotion() {
   return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -85,6 +103,7 @@ function DayCell({ c, events, selected, today, pickDay, enterDay, t, locale, kin
 
 export default function CalendarScreen() {
   const { events, songs, today, dispatch, notify, locale } = useStore();
+  const rooms = useRooms();
   const { t, dir } = useI18n();
   const rtl = dir === 'rtl';
   const navigate = useNavigate();
@@ -95,7 +114,9 @@ export default function CalendarScreen() {
   const [selected, setSelected] = useState(today);
   const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState({ time: '20:00', place: ROOMS[0], note: '', kind: 'r' });
+  const [draft, setDraft] = useState({ time: '20:00', end: shift('20:00', DEFAULT_HOURS), place: rooms[0], kind: 'r' });
+  const [addingRoom, setAddingRoom] = useState(false);
+  const [newRoom, setNewRoom] = useState('');
   const [slide, setSlide] = useState(null);
   const [grabbing, setGrabbing] = useState(null);
   const drag = useRef(null);
@@ -136,7 +157,9 @@ export default function CalendarScreen() {
 
   function openCreate(date) {
     setSelected(date);
-    setDraft({ time: '20:00', place: ROOMS[0], note: '', kind: 'r' });
+    setDraft({ time: '20:00', end: shift('20:00', DEFAULT_HOURS), place: rooms[0], kind: 'r' });
+    setAddingRoom(false);
+    setNewRoom('');
     setCreating(true);
     showDay(true);
   }
@@ -541,6 +564,18 @@ export default function CalendarScreen() {
 
   const gridProps = { events, selected, today, pickDay, enterDay, t, locale, kindLabel };
 
+  /* A room the band types in is theirs from that moment: it joins the list,
+     and the booking in hand is already standing in it. */
+  function addRoom() {
+    const name = newRoom.trim();
+    if (!name) return;
+    const known = rooms.find((r) => r.toLowerCase() === name.toLowerCase());
+    dispatch({ type: 'add-room', name });
+    setDraft((d) => ({ ...d, place: known || name }));
+    setNewRoom('');
+    setAddingRoom(false);
+  }
+
   function save() {
     const snapshot = { events };
     dispatch({ type: 'create-rehearsal', date: selected, ...draft });
@@ -654,10 +689,10 @@ export default function CalendarScreen() {
               <span className="sheet-peek-day">{longDate(selected, locale)}</span>
               <span className="sheet-peek-sub">
                 {creating
-                  ? t('calendar.peekNew', { kind: kindLabel(draft.kind), time: draft.time })
+                  ? t('calendar.peekNew', { kind: kindLabel(draft.kind), time: timeSpan(draft.time, draft.end) })
                   : event
                     ? <>
-                        <bdi>{event.time}</bdi>
+                        <bdi>{timeSpan(event.time, event.end)}</bdi>
                         {' · '}
                         <bdi>{event.place}</bdi>
                         {' · '}
@@ -709,17 +744,31 @@ export default function CalendarScreen() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--dim)' }}>
-                {t('calendar.startTime')}
+            {/* Both ends are the band's to set to whatever the night
+                actually is. */}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                <span className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--dim)' }}>
+                  {t('calendar.startTime')}
+                </span>
+                <input
+                  type="time"
+                  className="field mono"
+                  value={draft.time}
+                  onChange={(e) => setDraft((d) => withStart(d, e.target.value))}
+                />
               </label>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {TIMES.map((tm) => (
-                  <button key={tm} className={'chip' + (draft.time === tm ? ' is-on' : '')} onClick={() => setDraft((d) => ({ ...d, time: tm }))}>
-                    {tm}
-                  </button>
-                ))}
-              </div>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                <span className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--dim)' }}>
+                  {t('calendar.endTime')}
+                </span>
+                <input
+                  type="time"
+                  className="field mono"
+                  value={draft.end}
+                  onChange={(e) => setDraft((d) => ({ ...d, end: e.target.value }))}
+                />
+              </label>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -727,7 +776,7 @@ export default function CalendarScreen() {
                 {t('calendar.room')}
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                {ROOMS.map((p) => (
+                {rooms.map((p) => (
                   <button
                     key={p}
                     className={'chip' + (draft.place === p ? ' is-on' : '')}
@@ -738,20 +787,41 @@ export default function CalendarScreen() {
                     {draft.place === p && <Icon name="check" size={13} />}
                   </button>
                 ))}
+                {addingRoom ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      className="field"
+                      style={{ flex: 1 }}
+                      autoFocus
+                      value={newRoom}
+                      placeholder={t('calendar.roomName')}
+                      aria-label={t('calendar.roomName')}
+                      onChange={(e) => setNewRoom(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') addRoom();
+                        if (e.key === 'Escape') { setAddingRoom(false); setNewRoom(''); }
+                      }}
+                    />
+                    <button
+                      className="chip"
+                      style={{ height: 42, padding: '0 14px' }}
+                      disabled={!newRoom.trim()}
+                      onClick={addRoom}
+                    >
+                      {t('common.add')}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="chip"
+                    style={{ height: 42, justifyContent: 'center', padding: '0 14px', color: 'var(--dim)' }}
+                    onClick={() => setAddingRoom(true)}
+                  >
+                    <Icon name="plus" size={13} />
+                    {t('calendar.addRoom')}
+                  </button>
+                )}
               </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label className="eyebrow" style={{ letterSpacing: '0.02em', textTransform: 'none', fontSize: 11, color: 'var(--dim)' }} htmlFor="note">
-                {t('common.note')} <span style={{ color: 'var(--fainter)', fontWeight: 400 }}>{t('common.optional')}</span>
-              </label>
-              <textarea
-                id="note"
-                className="field"
-                placeholder={t('calendar.notePlaceholder')}
-                value={draft.note}
-                onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))}
-              />
             </div>
 
             <button className="btn btn-lg btn-block panel-cta" onClick={save}>
@@ -776,12 +846,11 @@ export default function CalendarScreen() {
               <div className="panel-head" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <h2 style={{ fontSize: 26, lineHeight: 1.1 }}>{longDate(selected, locale)}</h2>
                 <div className="meta-row" style={{ fontSize: 13 }}>
-                  <span className="strong">{event.time}</span>
+                  <span className="strong"><bdi>{timeSpan(event.time, event.end)}</bdi></span>
                   <span className="sep">·</span>
                   <span>{event.place}</span>
                 </div>
               </div>
-              {event.note && <div className="note" style={{ fontSize: 12.5 }}>{event.note}</div>}
             </div>
 
             <div className="stat-row">
@@ -809,7 +878,7 @@ export default function CalendarScreen() {
                         <span className="mini-title truncate" style={{ display: 'block' }}>{s.title}</span>
                         <span className="mini-sub">{s.artist}</span>
                       </span>
-                      <span className="key-badge" style={hue(s.key)}>{s.key}</span>
+                      <span className="key-badge" style={hue(songKey(s))}>{songKey(s)}</span>
                     </button>
                   ))}
                 </div>

@@ -47,6 +47,8 @@
 
   --good: #9bc46a;
   --warn: #c79a5c;
+  --warn-a16: rgba(199, 154, 92, 0.16);
+  --warn-a40: rgba(199, 154, 92, 0.4);
   --bad: #e4705a;
 
   --display: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
@@ -120,6 +122,8 @@
 
   --good: #4d7b26;
   --warn: #9a6614;
+  --warn-a16: rgba(154, 102, 20, 0.13);
+  --warn-a40: rgba(154, 102, 20, 0.42);
   --bad: #bd3d28;
 
   --muted: #62594e;
@@ -331,6 +335,17 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 .seg-label small { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: var(--fainter); }
 .seg-label strong { font-family: var(--mono); font-size: 13px; font-weight: 600; color: oklch(var(--hue-lc) var(--h, 62)); }
 .seg-label strong.is-set { color: var(--accent); }
+/* The key shown is the one the room hears — which is not the key the chords
+   are written in when a capo is on, so the capo says itself as loudly as the
+   key does, fret and all. */
+.capo-fact { display: inline-flex; align-items: center; gap: inherit; }
+.capo-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.01em;
+  color: var(--warn); background: var(--warn-a16);
+  box-shadow: inset 0 0 0 1px var(--warn-a40);
+  padding: 4.5px 10px; border-radius: 7px; white-space: nowrap;
+}
 
 /* Type size: two letters in one chip, clearly different, with air between. */
 .seg-scale { gap: 8px; padding-inline: 8px 10px; }
@@ -361,7 +376,10 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 .chip-row::-webkit-scrollbar { display: none; }
 .chip-row > * { flex: 0 0 auto; }
 
+/* Chord and key names are Latin: read them left to right even when the row
+   around them runs the other way, or a G# comes out "#G". */
 .key-badge {
+  direction: ltr; unicode-bidi: isolate;
   font-family: var(--mono); font-size: 11.5px; font-weight: 500;
   color: oklch(var(--hue-lc) var(--h, 62)); background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill));
   padding: 3.5px 8px; border-radius: 6px; white-space: nowrap;
@@ -375,6 +393,20 @@ textarea.field { height: 74px; padding: 10px 12px; resize: none; line-height: 1.
 .tag-new { color: var(--teal); background: var(--teal-a10); }
 .tag-work { color: var(--warn); background: rgba(199, 154, 92, 0.12); }
 .tag-flat { color: var(--fainter); background: var(--raised); }
+/* A capo is a standing instruction, not a footnote — it sits on the title
+   line in the same warm ink the song page uses, so a glance down the library
+   finds it without reading. */
+.capo-mark {
+  display: inline-flex; align-items: center; gap: 4px;
+  flex: 0 0 auto; white-space: nowrap;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+  color: var(--warn); background: var(--warn-a16);
+  box-shadow: inset 0 0 0 1px var(--warn-a40);
+  padding: 2.5px 7px; border-radius: 5px;
+}
+.capo-mark svg { flex: 0 0 auto; }
+/* In a set list the key column has room for the capo under the badge. */
+.set-capo { display: block; margin-top: 4px; font-size: 9px; color: var(--fainter); }
 .badge {
   font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em;
   padding: 5px 9px; border-radius: 6px;
@@ -711,18 +743,17 @@ button.att-status:hover { filter: brightness(1.3); }
 
 .chart {
   max-width: 780px; margin: 0 auto; padding: 30px 34px 90px;
-  direction: ltr;
-  text-align: left;
-  unicode-bidi: isolate;
+  text-align: start;
   --stage-mult: 1;
   --lyric-size: calc(20px * var(--sc, 1) * var(--stage-mult));
   --chord-size: calc(13.5px * var(--sc, 1) * var(--stage-mult));
   --chord-row: calc(var(--chord-row-base, 18px) * var(--sc, 1) * var(--stage-mult));
   --line-gap: calc(12px * var(--sc, 1) * var(--stage-mult));
 }
-.chart-section { margin-bottom: 30px; padding-left: 18px; border-left: 2px solid var(--progress-track); scroll-margin-top: 14px; }
-.chart-section.accent { border-left-color: var(--accent-a35); }
+.chart-section { margin-bottom: 30px; padding-inline-start: 18px; border-inline-start: 2px solid var(--progress-track); scroll-margin-top: 14px; }
+.chart-section.accent { border-inline-start-color: var(--accent-a35); }
 .chart-label { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; padding-inline-end: 7.5rem; }
+.chart.can-align .chart-label { padding-inline-end: 10.5rem; }
 .chart-label span { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
 .chart-section.accent .chart-label span { color: var(--accent); }
 .chart-label small { font-family: var(--mono); font-size: 10px; color: var(--fainter); }
@@ -735,17 +766,30 @@ button.att-status:hover { filter: brightness(1.3); }
   top: 10px;
   z-index: 8;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   pointer-events: none;
-  margin-bottom: -36px;
+  /* Deep enough to sit in the first label's empty corner, shallow enough that
+     the first line of the chart is never printed underneath it. */
+  margin-bottom: -16px;
 }
-.chart-jump-inner {
-  position: relative;
+/* Two tools share the corner now — align, then jump. */
+.chart-jump-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
   pointer-events: auto;
+}
+.chart-jump-inner { position: relative; }
+.chart-edit-btn {
+  width: 34px; height: 34px; padding: 0;
+  justify-content: center;
+  background: var(--bg);
+  box-shadow: 0 0 0 6px var(--bg);
 }
 .chart-jump-btn {
   height: 34px;
-  padding: 0 11px 0 13px;
+  padding-inline: 13px 11px;
   background: var(--bg);
   box-shadow: 0 0 0 6px var(--bg);
   font-size: 11.5px;
@@ -764,7 +808,7 @@ button.att-status:hover { filter: brightness(1.3); }
 .chart-jump-menu {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  inset-inline-end: 0;
   min-width: 216px;
   max-height: min(70vh, 420px);
   overflow-y: auto;
@@ -779,12 +823,15 @@ button.att-status:hover { filter: brightness(1.3); }
 .chart-jump-menu .struct-row { cursor: pointer; }
 .chart-jump-menu .struct-row:focus-visible { outline-offset: -2px; }
 
-.line { margin: 0 0 var(--line-gap, 12px); }
+.line { margin: 0 0 var(--line-gap, 12px); unicode-bidi: isolate; }
 .line.chords-only { margin-bottom: calc(var(--line-gap, 12px) * 0.6); }
 /* One chord stacked over the lyric fragment it lands on. */
 .chord-seg { display: inline-block; vertical-align: bottom; }
 .chord-seg .c {
   display: block;
+  /* Latin names read left to right, but over a Hebrew fragment the chord
+     still belongs above where the singing starts — the right edge. */
+  direction: ltr; unicode-bidi: isolate;
   font-family: var(--mono);
   font-size: var(--chord-size, 13.5px);
   font-weight: 700; letter-spacing: -0.01em;
@@ -796,9 +843,16 @@ button.att-status:hover { filter: brightness(1.3); }
   display: block; white-space: pre;
   font-size: var(--lyric-size, 20px);
   line-height: 1.28; color: var(--ink); letter-spacing: -0.008em;
+  unicode-bidi: plaintext;
 }
+/* The chord row now reads ltr, so its breathing room has to be put back on
+   the side the next chord comes from. */
+[dir='rtl'] .chord-seg .c { text-align: right; padding-inline: 0.7em 0; }
 /* A chord wider than the syllable under it must not collide with the next one. */
-.chord-seg .c { padding-right: 0.7em; }
+.chord-seg .c { padding-inline-end: 0.7em; }
+/* A chord that lands past the last word has no lyric to stand on; keep the
+   empty box tall enough that it stays up on the chord row. */
+.chord-seg .t:empty::after { content: '\200b'; }
 
 /* Chord-only lines (intro, outro, turnarounds) have no lyric to space them out. */
 .line.chords-only .chord-seg .t { display: none; }
@@ -806,13 +860,91 @@ button.att-status:hover { filter: brightness(1.3); }
   font-size: calc(var(--chord-size, 13.5px) * 1.25);
   height: calc(var(--chord-row, 18px) * 1.4);
   line-height: calc(var(--chord-row, 18px) * 1.4);
-  padding-right: 1.7em;
+  padding-inline-end: 1.7em;
 }
+
+
+/* ---- Aligning chords -------------------------------------------------
+   The chart keeps its shape; only two things change. Every chord becomes
+   something to pick up, and every letter becomes somewhere to put it down.
+   Nothing is dragged: on a phone a finger is wider than a syllable, so the
+   move is a tap on the exact letter, and the arrows in the bar below walk
+   it one character at a time. */
+/* The chord row opens up while aligning: a chord you are meant to pick up
+   with a thumb needs more than the 18px it needs to be read. */
+.chart.is-aligning {
+  --line-gap: calc(15px * var(--sc, 1) * var(--stage-mult));
+  --chord-row: calc(30px * var(--sc, 1) * var(--stage-mult));
+}
+
+.ed-chord {
+  position: relative;
+  font: inherit; color: inherit; letter-spacing: inherit;
+  /* Padding for the finger, pulled straight back out again so a chord still
+     prints exactly where it printed before the mode was turned on. */
+  padding: 6px 8px; margin: -6px -8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+/* A one-letter chord is narrower than a thumb and cannot be made wider
+   without walking into the next one — so the box it answers to reaches a
+   little further than the box it draws. */
+.ed-chord::after { content: ''; position: absolute; inset: 0 -2px; }
+.ed-chord:hover { background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill)); }
+.ed-chord.is-held {
+  background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill));
+  box-shadow: inset 0 0 0 1px oklch(var(--hue-lc) var(--h, 62) / var(--hue-edge));
+}
+/* The words the held chord owns, so you can see what you are moving off. */
+.chord-seg.is-held .t { box-shadow: inset 0 -2px 0 oklch(var(--hue-lc) var(--h, 62) / 0.55); }
+
+.is-aligning .ed-ch { cursor: pointer; }
+/* Only the line holding a chord takes taps — everywhere else the lyric is
+   still just a lyric, and still selectable. */
+.line.is-held .ed-ch { position: relative; }
+.line.is-held .ed-ch::after {
+  content: ''; position: absolute; inset: -0.5em 0 -0.35em; z-index: 1;
+}
+.line.is-held .ed-ch:hover { background: var(--accent-a10); box-shadow: inset 1px 0 0 var(--accent); }
+.ed-ch-end { display: inline-block; width: 0.9em; }
+.line.is-held .ed-tail .ed-ch-end:hover { background: var(--accent-a10); }
+
+/* The bar is a row of the screen, not a layer over it: the last line of a
+   chart can always be scrolled to, and the phone's tab bar keeps its place. */
+.align-bar {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 16px;
+  padding: 11px 34px;
+  background: var(--bar); border-top: 1px solid var(--raised-2);
+}
+.align-say { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.align-say p { margin: 0; font-size: 12px; color: var(--ink-soft); }
+.align-move {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--surface-2); border: 1px solid var(--line-2);
+  border-radius: 10px; padding: 3px;
+}
+.align-move button {
+  width: 38px; height: 34px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; color: var(--muted);
+}
+.align-move button:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.align-move button:disabled { opacity: 0.35; }
+.align-chord {
+  min-width: 3.6rem; text-align: center;
+  direction: ltr; unicode-bidi: isolate;
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  color: oklch(var(--hue-lc) var(--h, 62));
+}
+.align-acts { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.align-acts .ghost, .align-acts .btn { height: 36px; }
 
 .song-nextbar { direction: ltr; }
 .song-nextbar .grow { text-align: start; min-width: 0; }
 
 .chord-pill {
+  direction: ltr; unicode-bidi: isolate;
   font-family: var(--mono); font-size: 11.5px; font-weight: 600;
   padding: 4px 9px; border-radius: 6px;
   color: oklch(var(--hue-lc) var(--h, 62)); background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill));
@@ -828,7 +960,7 @@ button.att-status:hover { filter: brightness(1.3); }
 
 .is-stage { background: var(--bg); }
 .is-stage .chart { max-width: 1180px; column-count: 2; column-gap: 64px; padding-top: 34px; --stage-mult: 1.3; }
-.is-stage .chart-section { break-inside: avoid; -webkit-column-break-inside: avoid; padding-left: 0; border-left: 0; }
+.is-stage .chart-section { break-inside: avoid; -webkit-column-break-inside: avoid; padding-inline-start: 0; border-inline-start: 0; }
 .is-stage .chart-jump {
   position: relative;
   top: auto;
@@ -873,13 +1005,55 @@ button.att-status:hover { filter: brightness(1.3); }
 .lib-tools .search { flex: 1; min-width: 0; }
 .lib-tools .search .field { width: 100%; min-width: 0; height: 36px; max-width: 250px; }
 .lib-tools .btn { flex: 0 0 auto; }
+.lib-tools .lib-import-btn { flex: 0 0 auto; height: 36px; display: inline-flex; align-items: center; gap: 7px; padding-inline: 12px; }
 
-.lib-head { display: grid; gap: 14px; align-items: center; grid-template-columns: 46px 1fr 76px 62px 118px 34px; padding: 14px 34px 9px; border-bottom: 1px solid var(--raised-2); }
+.import-sheet { display: flex; flex-direction: column; gap: 14px; }
+.import-status { margin: 0; font-size: 12px; color: var(--dim); }
+.import-error { color: var(--warn); }
+.import-results { display: flex; flex-direction: column; gap: 6px; max-height: min(52vh, 420px); overflow: auto; margin-inline: -4px; padding-inline: 4px; }
+.import-hit {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: start;
+  padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--raised); transition: background 0.13s ease, border-color 0.13s ease;
+}
+.import-hit:hover:not(:disabled) { background: var(--raised-2); border-color: var(--line-3); }
+.import-hit:disabled { opacity: 0.55; }
+.import-art { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex: 0 0 auto; background: var(--bg); }
+.import-art-fallback { display: flex; align-items: center; justify-content: center; color: var(--faint); border: 1px solid var(--line); }
+.import-hit-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.import-hit-title { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.import-hit-artist { font-size: 12px; color: var(--dim); }
+.import-hit-meta { font-size: 10.5px; color: var(--fainter); font-family: var(--mono); }
+.import-hit-action { font-size: 11px; font-weight: 600; color: var(--accent); flex: 0 0 auto; }
+.import-poc { margin: auto 0 0; font-size: 10.5px; color: var(--fainter); line-height: 1.5; }
+
+.lib-head { display: grid; gap: 14px; align-items: center; grid-template-columns: 46px 1fr 76px 62px 118px auto; padding: 14px 34px 9px; border-bottom: 1px solid var(--raised-2); }
 .lib-head span { font-size: 9.5px; font-weight: 600; letter-spacing: 0.13em; color: var(--fainter); }
-.lib-head .right { text-align: right; }
+.lib-head .right { text-align: end; }
 
-.lib-row { display: grid; gap: 14px; align-items: center; grid-template-columns: 46px 1fr 76px 62px 118px 34px; padding: 9px 14px; border-radius: 11px; width: 100%; text-align: start; transition: background 0.13s ease; }
+.lib-row {
+  display: grid; gap: 14px; align-items: center;
+  grid-template-columns: 46px 1fr 76px 62px 118px auto;
+  padding: 9px 14px; border-radius: 11px; width: 100%;
+  transition: background 0.13s ease;
+}
 .lib-row:hover { background: var(--raised); }
+.lib-row-open {
+  grid-column: 1 / 6;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  gap: inherit;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.lib-row-open:focus-visible { outline: 2px solid var(--accent-a35); outline-offset: -2px; border-radius: 9px; }
 .art {
   width: 42px; height: 42px; border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
@@ -889,23 +1063,60 @@ button.att-status:hover { filter: brightness(1.3); }
 }
 .art.own { background: oklch(var(--hue-lc) var(--h, 62) / var(--hue-fill)); border-color: oklch(var(--hue-lc) var(--h, 62) / var(--hue-edge)); color: oklch(var(--hue-lc) var(--h, 62)); }
 .lib-row:hover .art { border-color: var(--line-3); }
+/* An imported song brings its cover with it, and the cover keeps the tile to
+   itself: the key moves out beside the artist, where the row has the room. */
+.art-cover { display: block; overflow: hidden; background: var(--bg); }
+.art-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lib-key { display: none; font-size: 10.5px; padding: 2px 6px; }
+/* Only a row whose tile is a cover — a cover that failed to load falls back to
+   the key tile, and the badge steps aside again. */
+.lib-row:has(.art-cover) .lib-key { display: inline-block; }
+.lib-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; flex: 0 0 auto; }
+.lib-del {
+  width: 28px;
+  height: 28px;
+  color: var(--bad);
+  flex: 0 0 auto;
+}
+.lib-del:hover { background: rgba(228, 112, 90, 0.1); border-color: var(--bad); }
 .go { display: flex; justify-content: flex-end; color: var(--accent); opacity: 0; transition: opacity 0.13s ease; }
 .lib-row:hover .go { opacity: 1; }
 
 /* ---------- toast ---------- */
 
+.toast-host {
+  position: fixed; left: 50%; bottom: 28px; z-index: 120;
+  width: min(420px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: toast-in 0.24s var(--ease) both;
+}
 .toast {
-  position: fixed; left: 50%; bottom: 28px; z-index: 80;
   display: flex; align-items: center; gap: 11px;
   background: var(--raised-2); border: 1px solid var(--line-3); border-radius: 11px;
   padding: 11px 16px; box-shadow: 0 12px 34px var(--lift);
-  animation: toast-in 0.24s var(--ease) both;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0);
+  opacity: var(--to, 1);
+  transition: transform 0.22s var(--settle), opacity 0.22s var(--settle);
 }
+.toast.is-drag { transition: none; animation: none; }
 .toast .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--accent); flex: 0 0 auto; }
-.toast p { margin: 0; font-size: 13px; color: var(--ink); }
-.toast button { font-size: 12.5px; font-weight: 600; color: var(--accent); }
-@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
-.toast { transform: translateX(-50%); }
+.toast p { margin: 0; font-size: 13px; color: var(--ink); flex: 1; min-width: 0; }
+.toast-undo {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+  border-radius: 8px;
+}
+.toast-undo:hover { background: var(--accent-a10); }
+@keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%); } }
 
 .slidein { animation: slidein 0.22s var(--ease) both; }
 @keyframes slidein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -1105,6 +1316,10 @@ button.att-status:hover { filter: brightness(1.3); }
   .ctl-toggles .ghost { height: 42px; padding: 0; }
   .ctl-toggles .ctl-note { padding: 0 12px; }
   .ctl-toggles .ctl-note .btn-label { display: inline; }
+  /* The one button whose whole point is what it says it does — it keeps its
+     words on a phone, like the note button. */
+  .ctl-toggles .ctl-capo { padding: 0 12px; }
+  .ctl-toggles .ctl-capo .btn-label { display: inline; }
   .song-ctl .seg-key { justify-content: space-between; order: 1; min-width: 0; }
   .song-ctl .ctl-chords { height: 42px; padding: 0; order: 2; min-width: 0; }
   .song-ctl .seg-scale { width: max-content; max-width: 100%; justify-self: end; order: 3; }
@@ -1125,18 +1340,38 @@ button.att-status:hover { filter: brightness(1.3); }
     border-left: 0; border-top: 1px solid var(--raised-2);
     padding: 20px 18px 26px; gap: 22px;
   }
+  /* The sheet stands on the tab bar, the way the day's action bar does — at
+     bottom: 0 its last 79px, and with them the button the whole sheet is
+     for, were parked behind the tabs and could not be reached. */
   .aside.is-sheet {
-    display: flex; position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+    display: flex; position: fixed; left: 0; right: 0; bottom: var(--tabbar-h); top: auto;
     width: auto !important; flex: none !important; max-height: 76vh; z-index: 70;
     overscroll-behavior: contain;
     border-left: 0; border-top: 1px solid var(--line-2);
     border-radius: 16px 16px 0 0;
-    padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+    padding: 18px 16px 20px;
     box-shadow: 0 -18px 44px var(--scrim);
   }
   .chart { padding: 22px 18px 24px; max-width: none; }
-  .chart-section { padding-left: 0; border-left: 0; margin-bottom: 26px; }
-  .chart-jump { top: 8px; margin-bottom: -40px; }
+  .chart-edit-btn { width: 38px; height: 38px; }
+  /* The hint gets the full width; the arrows and the two answers share the
+     row under it, so nothing has to shrink to fit a 390px phone. */
+  .align-bar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'say say' 'move acts';
+    gap: 10px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .align-say { grid-area: say; }
+  .align-move { grid-area: move; }
+  .align-acts { grid-area: acts; justify-content: flex-end; }
+  .align-move button { width: 44px; height: 38px; }
+  .align-acts .ghost, .align-acts .btn { height: 44px; padding: 0 16px; }
+  .chart-section { padding-inline-start: 0; border-inline-start: 0; margin-bottom: 26px; }
+  /* The cluster floats over the chart as it scrolls — but it must not be
+     sitting on the first line before the chart has moved at all. Two tools
+     wide, the old -40px started the intro underneath them. */
+  .chart-jump { top: 8px; margin-bottom: -18px; }
   .chart-jump-btn { height: 38px; }
 
   /* Stage mode takes the whole phone: no header, no tab bar, bigger type
@@ -1188,10 +1423,12 @@ button.att-status:hover { filter: brightness(1.3); }
   /* Tempo and key are one token each — never break them across lines. */
   .title-line .mono, .title-line .key-badge { white-space: nowrap; flex: 0 0 auto; }
 
-  .lib-row { grid-template-columns: 46px 1fr; gap: 12px; padding: 10px 12px; }
-  .lib-row > .lib-tempo, .lib-row > .lib-time, .lib-row > .lib-last, .lib-row > .go { display: none; }
+  .lib-row { grid-template-columns: 46px 1fr auto; gap: 12px; padding: 10px 12px; }
+  .lib-row-open { grid-column: 1 / 3; grid-template-columns: 46px 1fr; }
+  .lib-row-open > .lib-tempo, .lib-row-open > .lib-time, .lib-row-open > .lib-last { display: none; }
+  .lib-actions .go { display: none; }
 
-  .toast { left: 16px; right: 16px; bottom: calc(var(--tabbar-h) + 12px); transform: none; }
+  .toast-host { left: 16px; right: 16px; width: auto; bottom: calc(var(--tabbar-h) + 12px); transform: none; }
   @keyframes toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
   .hide-sm { display: none !important; }

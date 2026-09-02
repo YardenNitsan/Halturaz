@@ -96,6 +96,13 @@ export function addMonths(y, m, delta) {
   return { y: Math.floor(total / 12), m: ((total % 12) + 12) % 12 };
 }
 
+/* An event that has an end reads as a span; one that doesn't is still just a
+   time. The dash is an en dash with no spaces, so it stays one token when the
+   meta row wraps. */
+export function timeSpan(time, end) {
+  return end ? `${time}\u2013${end}` : time;
+}
+
 /** 252 -> "4:12" */
 export function mmss(sec) {
   const m = Math.floor(sec / 60);

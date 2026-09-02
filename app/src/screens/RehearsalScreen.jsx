@@ -1,17 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Icon } from '../components/Icon.jsx';
-import { useStore } from '../store.jsx';
+import { useStore, useRooms } from '../store.jsx';
 import { useI18n } from '../i18n/index.js';
-import { BAND, ROOMS } from '../data.js';
+import { BAND } from '../data.js';
 import { hue, memberHue, tempoHue } from '../lib/hues.js';
-import { monthName, parseISO, longDate, weekdayOf, mmss, runtime, relative, isISODate } from '../lib/dates.js';
-import { consumeNoteAutoShow } from '../lib/sessionNotes.js';
+import { songKey } from '../lib/chords.js';
+import { monthName, parseISO, longDate, weekdayOf, mmss, runtime, relative, isISODate, timeSpan } from '../lib/dates.js';
 
 export default function RehearsalScreen() {
   const { date } = useParams();
   const navigate = useNavigate();
   const { events, songs, today, dispatch, notify, locale } = useStore();
+  const rooms = useRooms();
   const { t, role } = useI18n();
 
   const [query, setQuery] = useState('');
@@ -24,21 +25,6 @@ export default function RehearsalScreen() {
 
   const event = events[date];
   const byId = useMemo(() => Object.fromEntries(songs.map((s) => [s.id, s])), [songs]);
-
-  /* Walking into a day hands you its note first, once per tab session. */
-  const [noteOpen, setNoteOpen] = useState(false);
-  const notePopRef = useRef(null);
-  const hasNote = !!event?.note;
-  useEffect(() => {
-    setNoteOpen(hasNote && consumeNoteAutoShow('rehearsal', date));
-  }, [date, hasNote]);
-  useEffect(() => { if (noteOpen) notePopRef.current?.focus(); }, [noteOpen]);
-  useEffect(() => {
-    if (!noteOpen) return;
-    const onKey = (e) => { if (e.key === 'Escape') setNoteOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [noteOpen]);
 
   const attLabel = (status) => {
     if (status === 'late') return t('rehearsal.attLate');
@@ -65,8 +51,8 @@ export default function RehearsalScreen() {
       date,
       kind,
       time: kind === 's' ? '21:00' : '20:00',
-      place: kind === 's' ? ROOMS[ROOMS.length - 1] : ROOMS[0],
-      note: ''
+      end: kind === 's' ? '23:59' : '23:00',
+      place: kind === 's' ? rooms[rooms.length - 1] : rooms[0]
     });
     const msg = kind === 's'
       ? t('rehearsal.addedShow', { date: longDate(date, locale) })
@@ -99,18 +85,18 @@ export default function RehearsalScreen() {
   const filtering = q.length > 0;
   const visible = setSongs
     .map((s, i) => ({ ...s, index: i }))
-    .filter((s) => !q || `${s.title} ${s.artist} ${s.key}`.toLowerCase().includes(q));
+    .filter((s) => !q || `${s.title} ${s.artist} ${songKey(s)}`.toLowerCase().includes(q));
 
   const pq = poolQuery.trim().toLowerCase();
   const pool = songs
     .filter((s) => !event.songs.includes(s.id))
-    .filter((s) => !pq || `${s.title} ${s.artist} ${s.key}`.toLowerCase().includes(pq));
+    .filter((s) => !pq || `${s.title} ${s.artist} ${songKey(s)}`.toLowerCase().includes(pq));
   const isShow = event.kind === 's';
   const { m } = parseISO(date);
 
   const attendance = event.att || {};
   const nextStatus = { undefined: 'in', in: 'late', late: 'out', out: '' };
-  const keyTally = setSongs.reduce((acc, s) => ({ ...acc, [s.key]: (acc[s.key] || 0) + 1 }), {});
+  const keyTally = setSongs.reduce((acc, s) => ({ ...acc, [songKey(s)]: (acc[songKey(s)] || 0) + 1 }), {});
 
   function move(from, to) {
     if (from === null || to === null || to === from || to === from + 1) return;
@@ -137,7 +123,7 @@ export default function RehearsalScreen() {
   }
 
   function openEdit() {
-    setForm({ kind: event.kind, time: event.time, place: event.place, note: event.note || '' });
+    setForm({ kind: event.kind, time: event.time, end: event.end || '', place: event.place });
     setMode('edit');
   }
 
@@ -187,7 +173,7 @@ export default function RehearsalScreen() {
               <h1 className="screen-title">{longDate(date, locale)}</h1>
 
               <div className="meta-row">
-                <span className="strong">{event.time}</span>
+                <span className="strong"><bdi>{timeSpan(event.time, event.end)}</bdi></span>
                 <span className="sep">·</span>
                 <span>{event.place}</span>
                 {totalSec > 0 && (
@@ -202,17 +188,6 @@ export default function RehearsalScreen() {
                 <button className="ghost" onClick={openEdit}>
                   {t('rehearsal.editDetails')}
                 </button>
-                {event.note && (
-                  <button
-                    className={'ghost' + (noteOpen ? ' is-on' : '')}
-                    aria-label={t('rehearsal.showNote')}
-                    aria-expanded={noteOpen}
-                    onClick={() => setNoteOpen(true)}
-                  >
-                    <Icon name="note" size={14} />
-                    {t('rehearsal.noteButton')}
-                  </button>
-                )}
               </div>
             </div>
 
@@ -345,13 +320,22 @@ export default function RehearsalScreen() {
                       </span>
                       <span className="title-line" style={{ gap: 7 }}>
                         <span className="set-artist truncate">{s.artist}</span>
-                        <span className="show-sm key-badge" style={hue(s.key)}>{s.key}</span>
+                        <span className="show-sm key-badge" style={hue(songKey(s))}>{songKey(s)}</span>
                         <span className="show-sm mono" style={{ fontSize: 11, color: 'var(--faint)' }}>{s.bpm} {t('common.bpm')}</span>
                       </span>
                     </button>
                   </div>
 
-                  <div className="set-key"><span className="key-badge" style={hue(s.key)}>{s.key}</span></div>
+                  <div className="set-key">
+                    <span
+                      className="key-badge"
+                      style={hue(songKey(s))}
+                      title={s.capo ? t('common.capoWith', { capo: s.capo }) : undefined}
+                    >
+                      {songKey(s)}
+                    </span>
+                    {s.capo > 0 && <span className="set-capo">{t('common.capoWith', { capo: s.capo })}</span>}
+                  </div>
 
                   <div className="set-tempo">
                     <span className="tempo-dot" style={tempoHue(s.bpm)} />
@@ -424,7 +408,7 @@ export default function RehearsalScreen() {
                   <button key={s.id} className="mini-row" style={{ margin: 0, width: '100%', padding: 10 }} onClick={() => add(s)}>
                     <span className="grow">
                       <span className="mini-title truncate" style={{ display: 'block' }}>{s.title}</span>
-                      <span className="mini-sub">{s.artist} · {s.key} · {s.bpm} BPM</span>
+                      <span className="mini-sub">{s.artist} · {songKey(s)} · {s.bpm} BPM</span>
                     </span>
                     <span style={{ width: 26, height: 26, borderRadius: 99, border: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flex: '0 0 auto' }}>
                       <Icon name="plus" size={13} />
@@ -463,15 +447,27 @@ export default function RehearsalScreen() {
               ))}
             </div>
 
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-              <span className="eyebrow">{t('calendar.startTime')}</span>
-              <input
-                type="time"
-                className="field mono"
-                value={form.time}
-                onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-              />
-            </label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
+                <span className="eyebrow">{t('calendar.startTime')}</span>
+                <input
+                  type="time"
+                  className="field mono"
+                  value={form.time}
+                  onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
+                />
+              </label>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
+                <span className="eyebrow">{t('calendar.endTime')}</span>
+                <input
+                  type="time"
+                  className="field mono"
+                  value={form.end}
+                  onChange={(e) => setForm((f) => ({ ...f, end: e.target.value }))}
+                />
+              </label>
+            </div>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               <span className="eyebrow">{t('calendar.room')}</span>
@@ -483,18 +479,8 @@ export default function RehearsalScreen() {
                 onChange={(e) => setForm((f) => ({ ...f, place: e.target.value }))}
               />
               <datalist id="rooms">
-                {ROOMS.map((r) => <option key={r} value={r} />)}
+                {rooms.map((r) => <option key={r} value={r} />)}
               </datalist>
-            </label>
-
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-              <span className="eyebrow">{t('common.note')}</span>
-              <textarea
-                className="field"
-                value={form.note}
-                placeholder={t('calendar.notePlaceholder')}
-                onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-              />
             </label>
 
             <button className="btn btn-lg btn-block" onClick={saveEdit}>{t('rehearsal.saveChanges')}</button>
@@ -552,30 +538,6 @@ export default function RehearsalScreen() {
           </>
         )}
       </aside>
-
-      {noteOpen && event.note && (
-        <div
-          className="note-scrim"
-          onMouseDown={(e) => { if (e.target === e.currentTarget) setNoteOpen(false); }}
-        >
-          <div
-            ref={notePopRef}
-            tabIndex={-1}
-            className="note-pop"
-            role="dialog"
-            aria-modal="true"
-            aria-label={date === today ? t('rehearsal.noteTonight') : t('rehearsal.noteThis')}
-          >
-            <div className="note-pop-head">
-              <span className="eyebrow">{date === today ? t('rehearsal.noteTonight') : t('rehearsal.noteThis')}</span>
-              <button className="icon-btn" aria-label={t('rehearsal.closeNote')} onClick={() => setNoteOpen(false)}>
-                <Icon name="close" size={15} />
-              </button>
-            </div>
-            <p className="note-pop-body">{event.note}</p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

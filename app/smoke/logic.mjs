@@ -1,7 +1,7 @@
 globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 console.error = () => {};
 
-const { transpose, chordsUsed } = await import('../src/lib/chords.js');
+const { transpose, chordsUsed, detectKey, songKey } = await import('../src/lib/chords.js');
 const { monthGrid, monthWeekStart, weekOffset, cellsFromWeekStart, iso, runtime, mmss, relative, isISODate } = await import('../src/lib/dates.js');
 
 let fail = 0;
@@ -22,6 +22,24 @@ eq('Gsus4 +5', transpose('Gsus4', 5), 'Csus4');
 eq('wrap G +5', transpose('G', 5), 'C');
 eq('wrap C -1', transpose('C', -1), 'B');
 eq('no steps is identity', transpose('F#m7', 0), 'F#m7');
+
+/* Neither Tab4U nor every UG tab prints a key, so it gets read off the chords.
+   A wrong default would send the whole band transposing. */
+const chart = (...chords) => [{ label: 'x', lines: chords.map((c) => [{ c }]) }];
+eq('key of a I-V-vi-IV chart', detectKey(chart('C', 'G', 'Am', 'F', 'C')), 'C');
+eq('key hears the relative minor', detectKey(chart('Em', 'C', 'G', 'D', 'Em')), 'Em');
+eq('key hears the relative major', detectKey(chart('G', 'Em', 'C', 'D', 'G')), 'G');
+eq('key keeps the chart flat spelling', detectKey(chart('Bb', 'F', 'Gm', 'Eb', 'Bb')), 'Bb');
+eq('key survives a borrowed bVII', detectKey(chart('D', 'C', 'G', 'D', 'C', 'D')), 'D');
+eq('key ignores the bass of a slash chord', detectKey(chart('A', 'E/G#', 'F#m', 'D', 'A')), 'A');
+eq('key of a chart with no chords', detectKey([{ label: 'x', lines: [[{ t: 'just words' }]] }]), '');
+
+/* A capo song is heard above its chords — the badge says the key the room
+   hears, and says which capo it counts on. */
+eq('capo 2 on an Em chart sounds F#m', songKey({ key: 'Em', capo: 2 }), 'F#m');
+eq('capo key is spelled like a chart', songKey({ key: 'Am', capo: 1 }), 'Bbm');
+eq('no capo leaves the key alone', songKey({ key: 'Bb', capo: 0 }), 'Bb');
+eq('a missing capo is no capo', songKey({ key: 'D' }), 'D');
 
 // --- calendar math: Aug 1 2026 is a Saturday, Aug 29 a Saturday
 const aug = monthGrid(2026, 7);
@@ -92,6 +110,11 @@ const newSong = { id: 'x', title: 'X', artist: 'Static Bloom', key: 'C', bpm: 10
 const withSong = reducer(base, { type: 'add-to-library', song: newSong });
 eq('add-to-library keeps the chart empty and marks it custom',
    [withSong.songs.length, withSong.songs[0].custom, withSong.songs[0].sections.length], [1, true, 0]);
+const withChart = reducer(base, {
+  type: 'add-to-library',
+  song: { ...newSong, sections: [{ label: 'Verse', bars: '', lines: [[{ c: 'C', t: 'hey' }]] }], needsWork: false }
+});
+eq('add-to-library keeps imported sections', [withChart.songs[0].sections.length, withChart.songs[0].needsWork], [1, false]);
 eq('add-to-library will not add the same id twice',
    reducer(withSong, { type: 'add-to-library', song: newSong }).songs.length, 1);
 eq('add-to-library rejects junk', reducer(base, { type: 'add-to-library', song: { id: 5 } }).songs.length, 0);
@@ -99,8 +122,160 @@ eq('add-to-library rejects junk', reducer(base, { type: 'add-to-library', song: 
 const booked = reducer(withSong, { type: 'add-song', date: 'd', songId: 'x' });
 const dropped = reducer(booked, { type: 'remove-from-library', songId: 'x' });
 eq('deleting a custom song pulls it out of every setlist', [dropped.songs.length, order(dropped)], [0, 'abcd']);
+eq('undo library delete restores the song',
+   reducer(dropped, { type: 'restore', events: booked.events, songs: booked.songs }).songs.length, 1);
 eq('code-owned songs cannot be deleted',
-   reducer({ ...base, songs: [{ id: 'a', title: 'A' }] }, { type: 'remove-from-library', songId: 'a' }).songs.length, 1);
+   reducer({ ...base, songs: [{ id: 'copper-line', title: 'Copper Line' }] }, { type: 'remove-from-library', songId: 'copper-line' }).songs.length, 1);
+
+// --- moving a chord over the words
+const { readLine, writeLine, splitLine, moveChord, nudgeChord, isAlignable, readSections, writeSections } =
+  await import('../src/lib/chordEdit.js');
+const { SONGS } = await import('../src/data.js');
+
+const sung = [{ c: 'D', t: 'Six on the ' }, { c: 'A', t: 'copper line,' }];
+eq('a line reads back as one lyric with anchors',
+   readLine(sung), { text: 'Six on the copper line,', chords: [{ c: 'D', at: 0 }, { c: 'A', at: 11 }] });
+
+/* The whole feature rests on this: reading a chart and writing it straight
+   back out must hand back the very same chart, or opening the editor and
+   saving would quietly rewrite every song in the library. */
+let roundTrips = 0;
+for (const song of SONGS) {
+  const back = writeSections(readSections(song.sections));
+  if (JSON.stringify(back) !== JSON.stringify(song.sections)) {
+    fail++;
+    console.log(`FAIL round trip rewrote ${song.id}`);
+  } else roundTrips++;
+}
+eq('every shipped chart survives a round trip untouched', roundTrips, SONGS.length);
+
+/* Moving the A one character earlier takes the space with it — the fragment
+   carries its own gap, the way the chart was typed. */
+eq('a chord moved one letter earlier takes the space with it',
+   writeLine(nudgeChord(readLine(sung), 1, -1)),
+   [{ c: 'D', t: 'Six on the' }, { c: 'A', t: ' copper line,' }]);
+eq('a chord moved onto the first letter leaves nothing before it',
+   writeLine(moveChord(readLine(sung), 1, 0)),
+   [{ c: 'D' }, { c: 'A', t: 'Six on the copper line,' }]);
+eq('a chord can be sent past the last word',
+   writeLine(moveChord(readLine(sung), 1, 23)),
+   [{ c: 'D', t: 'Six on the copper line,' }, { c: 'A' }]);
+eq('a chord cannot be pushed off the front', nudgeChord(readLine(sung), 0, -5).chords[0].at, 0);
+eq('a chord cannot be pushed off the end', moveChord(readLine(sung), 1, 999).chords[1].at, 23);
+const still = readLine(sung);
+eq('moving a chord where it already is hands back the same line', moveChord(still, 1, 11) === still, true);
+
+/* Chords crossing each other stay in the order the line holds them, so the
+   chord in hand is still the chord in hand after the move. */
+const crossed = moveChord(readLine(sung), 0, 20);
+eq('a chord dragged past its neighbour keeps its own slot', crossed.chords.map((c) => c.c), ['D', 'A']);
+eq('but the line prints them in reading order',
+   writeLine(crossed).map((g) => g.c || '-'), ['-', 'A', 'D']);
+
+const lead = [{ t: 'On ' }, { c: 'G', t: 'the road' }];
+eq('words before the first chord belong to no chord', writeLine(readLine(lead)), lead);
+eq('an intro row of chords has nothing to align to', isAlignable(readLine([{ c: 'D' }, { c: 'A' }])), false);
+eq('an intro row still writes back out whole',
+   writeLine(readLine([{ c: 'D' }, { c: 'A' }])), [{ c: 'D' }, { c: 'A' }]);
+eq('split says where every fragment starts in the lyric',
+   splitLine(readLine(sung)).map((p) => [p.ci, p.from]), [[0, 0], [1, 11]]);
+
+// --- the chart edit, in the store
+const chartSong = { id: 'copper-line', title: 'Copper Line', sections: [{ label: 'V', bars: '', lines: [[{ c: 'D', t: 'hi' }]] }] };
+const chartBase = { ...base, songs: [chartSong] };
+const moved = [{ label: 'V', bars: '', lines: [[{ c: 'D' }, { t: 'hi' }]] }];
+eq('edit-chart replaces the chart and marks it edited',
+   (() => { const st = reducer(chartBase, { type: 'edit-chart', songId: 'copper-line', sections: moved });
+            return [JSON.stringify(st.songs[0].sections), st.songs[0].chartEdited]; })(),
+   [JSON.stringify(moved), true]);
+eq('edit-chart rejects junk',
+   reducer(chartBase, { type: 'edit-chart', songId: 'copper-line', sections: [{ lines: 'nope' }] }).songs[0].chartEdited,
+   undefined);
+eq('edit-chart ignores a song that is not there',
+   reducer(chartBase, { type: 'edit-chart', songId: 'nobody', sections: moved }).songs[0].sections.length, 1);
+eq('undo puts the old chart back',
+   JSON.stringify(reducer(
+     reducer(chartBase, { type: 'edit-chart', songId: 'copper-line', sections: moved }),
+     { type: 'restore', songs: chartBase.songs }
+   ).songs[0].sections), JSON.stringify(chartSong.sections));
+
+// --- chordpro import parser
+const { parseChordPro } = await import('../src/lib/chordpro.js');
+const sample = `[Intro]
+[ch]Em[/ch]   [ch]G[/ch]
+[Verse]
+[tab][ch]Em[/ch]       [ch]G[/ch]
+Today is gonna be the day[/tab]`;
+const parsed = parseChordPro(sample);
+eq('chordpro sections', parsed.map((s) => s.label), ['Intro', 'Verse']);
+eq('chordpro intro chords', parsed[0].lines[0].map((s) => s.c), ['Em', 'G']);
+eq('chordpro verse split', parsed[1].lines[0].map((s) => [s.c, s.t?.trim()]), [['Em', 'Today is gonna be the'], ['G', 'day']]);
+
+const knock = `[Verse 2]
+[tab][ch]G[/ch]             [ch]D[/ch]                   [ch]Am[/ch]
+  Mama put my guns in the ground[/tab]`;
+const knockParsed = parseChordPro(knock)[0].lines[0];
+eq('knockin chord count', knockParsed.length, 3);
+eq('knockin Am lands on ground', knockParsed[2].c, 'Am');
+eq('knockin Am text', knockParsed[2].t?.trim(), 'ground');
+
+const { songSlug, hasHebrew, textMatch, titleMatch } = await import('../src/lib/text.js');
+eq('hebrew slug', songSlug('מחר', new Set()), 'מחר');
+eq('hasHebrew', hasHebrew('אביב גפן'), true);
+eq('hebrew title match', textMatch('מחר', 'מחר (live)'), true);
+eq('title match live suffix', titleMatch('מחר', 'מחר (live)'), true);
+eq('title rejects partial', titleMatch('יש לי מלאך', 'מלאך'), false);
+eq('mashina title', titleMatch('הכוכבים דולקים על אש קטנה', 'הכוכבים דולקים על אש קטנה'), true);
+eq('mashina alias', textMatch('Mashina', 'משינה'), true);
+
+const { parseTab4uHtml } = await import('../server/tab4u.js');
+const mashinaHtml = await fetch(
+  'https://www.tab4u.com/tabs/songs/2055_%D7%9E%D7%A9%D7%99%D7%A0%D7%94_-_%D7%94%D7%9B%D7%95%D7%9B%D7%91%D7%99%D7%9D_%D7%93%D7%95%D7%9C%D7%A7%D7%99%D7%9D_%D7%A2%D7%9C_%D7%90%D7%A9_%D7%A7%D7%98%D7%A0%D7%94.html',
+  { headers: { 'User-Agent': 'Mozilla/5.0' } }
+).then((r) => r.text());
+const mashinaSections = parseTab4uHtml(mashinaHtml);
+eq('mashina single section', mashinaSections.length, 1);
+/* Tab4U prints no key of its own — the page only offers a "שנה טון" button. */
+eq('mashina key read off the chords', detectKey(mashinaSections), 'G');
+const lineText = (l) => l.map((s) => s.t || '').join('');
+eq(
+  'mashina has chorus',
+  mashinaSections[0].lines.some((l) => /הכוכבים דולקים/.test(lineText(l))),
+  true
+);
+
+/* Tab4U prints a Hebrew chart mirrored: the chord row is ltr but flush right,
+   over a lyric read right to left. These three lines are checked against where
+   tab4u's own page puts each chord, so a regression in the column maths shows
+   up as the wrong word. */
+const pairs = (lyric) => {
+  const line = mashinaSections[0].lines.find((l) => lineText(l).trim().startsWith(lyric));
+  return line.filter((s) => s.c).map((s) => [s.c, (s.t || '').trim().split(/\s+/)[0] || '-']);
+};
+eq('mashina verse reads G then Bm', pairs('הסיפור'), [['G', 'הסיפור'], ['Bm', 'מוזר']]);
+eq('mashina word before the first chord', pairs('על בחורה'), [['F', 'בחורה'], ['C', 'הכרתי']]);
+eq('mashina four chords in reading order', pairs('ואותה'),
+  [['G', 'ואותה'], ['Bm', 'בבר'], ['F', 'לילה'], ['C', '-']]);
+
+/* The organ part is printed as tab rows partway down the page; reading must
+   carry on past it, or the last verse is lost. */
+eq(
+  'mashina keeps the verse below the organ part',
+  mashinaSections[0].lines.some((l) => /במזומן/.test(lineText(l))),
+  true
+);
+
+/* An English chart on Tab4U is marked chords_en and set flush left. */
+const oasisHtml = await fetch('https://www.tab4u.com/tabs/songs/3396_Oasis_-_Wonderwall.html',
+  { headers: { 'User-Agent': 'Mozilla/5.0' } }).then((r) => r.text());
+const oasis = parseTab4uHtml(oasisHtml).flatMap((s) => s.lines);
+eq('oasis chart has chords', oasis.filter((l) => l.some((s) => s.c)).length > 20, true);
+eq(
+  'oasis first sung line',
+  oasis.find((l) => /gonna be the day/i.test(l.map((s) => s.t || '').join('')))
+    .filter((s) => s.c).map((s) => [s.c, (s.t || '').trim().split(/\s+/)[0]]),
+  [['Em7', 'Today'], ['G', 'gonna']]
+);
 
 console.log(fail ? `\n${fail} check(s) failed` : '\nall logic checks pass');
 process.exit(fail ? 1 : 0);

@@ -162,18 +162,17 @@ export const SONGS = [
 const set8 = ['copper-line','half-past-nowhere','room-12','dreams','ember-and-ash','northbound','seven-nation-army','static-bloom'];
 
 export const EVENTS = {
-  '2026-07-21': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8.slice(0, 7), done: [], note: '' },
-  '2026-07-28': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: set8, note: '' },
-  '2026-08-04': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', songs: set8.slice(0, 6), done: set8.slice(0, 6), note: '' },
-  '2026-08-11': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', songs: set8.slice(0, 7), done: set8.slice(0, 5), note: '' },
-  '2026-08-18': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: set8.slice(0, 6), note: 'Recorded a room take of Copper Line.' },
-  '2026-08-22': { kind: 'r', time: '14:00', place: 'Studio 9', songs: set8.concat(['slow-signal']), done: set8, note: 'Full run-through, no stopping.' },
-  '2026-08-29': { kind: 'r', time: '19:00', place: 'Studio 9', songs: set8, done: ['copper-line','half-past-nowhere','dreams'], att: { maya: 'in', ori: 'in', dana: 'in', tal: 'late', noam: 'in' }, note: 'Levontin set is in 7 days. Run the whole thing twice, no stopping. Tal — the new outro on Ember & Ash stays at 76 until bar 40.' },
-  '2026-09-01': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', songs: set8.slice(0, 7), done: [], note: '' },
-  '2026-09-05': { kind: 's', time: '21:30', place: 'Levontin 7', songs: set8.concat(['slow-signal','kite-weather','marmara']), done: [], note: 'Doors 20:30. Load in at 18:00, two other bands on the bill.' },
-  '2026-09-08': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: [], note: '' },
-  '2026-09-15': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: [], note: '' }
+  '2026-07-21': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8.slice(0, 7), done: [] },
+  '2026-07-28': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: set8 },
+  '2026-08-04': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', songs: set8.slice(0, 6), done: set8.slice(0, 6) },
+  '2026-08-11': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', songs: set8.slice(0, 7), done: set8.slice(0, 5) },
+  '2026-08-18': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: set8.slice(0, 6) },
+  '2026-08-22': { kind: 'r', time: '14:00', place: 'Studio 9', songs: set8.concat(['slow-signal']), done: set8 },
+  '2026-08-29': { kind: 'r', time: '19:00', place: 'Studio 9', songs: set8, done: ['copper-line','half-past-nowhere','dreams'], att: { maya: 'in', ori: 'in', dana: 'in', tal: 'late', noam: 'in' } },
+  '2026-09-01': { kind: 'r', time: '20:00', place: 'Rehearsal Room B', songs: set8.slice(0, 7), done: [] },
+  '2026-09-05': { kind: 's', time: '21:30', place: 'Levontin 7', songs: set8.concat(['slow-signal','kite-weather','marmara']), done: [] },
+  '2026-09-08': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: [] },
+  '2026-09-15': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8, done: [] }
 };
 
-export const ROOMS = ['Studio 9', 'Rehearsal Room B', 'Levontin 7'];
-export const TIMES = ['18:00', '19:00', '20:00', '21:00'];
+export const ROOMS = ['יניב', 'מטאור', 'חיפה'];

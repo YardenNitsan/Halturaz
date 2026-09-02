@@ -1,22 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon.jsx';
+import { SongImportSheet } from '../components/SongImportSheet.jsx';
+import { SongArt } from '../components/SongArt.jsx';
 import { useStore } from '../store.jsx';
 import { useI18n } from '../i18n/index.js';
 import { BAND } from '../data.js';
 import { hue, keyHue } from '../lib/hues.js';
+import { songKey } from '../lib/chords.js';
 import { mmss, runtime } from '../lib/dates.js';
+import { songSlug, sameSongEntry } from '../lib/text.js';
+import { isDeletableSong } from '../lib/songs.js';
+import { freezeUndo } from '../lib/undo.js';
+import { createLogger } from '../lib/logger.js';
+
+const log = createLogger('library');
 
 const KEYS = ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Am', 'Em', 'Bm', 'F#m', 'Dm', 'Gm', 'Cm'];
 const BLANK = { title: '', artist: BAND.name, key: 'C', bpm: '100', length: '3:30', own: true };
-
-function slug(title, taken) {
-  const base =
-    title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'song';
-  let id = base;
-  for (let i = 2; taken.has(id); i++) id = `${base}-${i}`;
-  return id;
-}
 
 function parseLength(v) {
   const m = /^(\d{1,2}):([0-5]?\d)$/.exec(v.trim());
@@ -28,13 +29,14 @@ function parseLength(v) {
 const GROUP_IDS = ['all', 'originals', 'covers', 'charts', 'work'];
 
 export default function LibraryScreen() {
-  const { songs, dispatch, notify, locale } = useStore();
+  const { songs, events, dispatch, notify, locale } = useStore();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState('all');
   const [key, setKey] = useState('all');
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [draft, setDraft] = useState(BLANK);
 
   const GROUPS = useMemo(() => {
@@ -54,9 +56,7 @@ export default function LibraryScreen() {
 
   const allKeyLabel = t('common.all');
 
-  const titleTaken = songs.some(
-    (s) => s.title.trim().toLowerCase() === draft.title.trim().toLowerCase()
-  );
+  const titleTaken = songs.some((s) => sameSongEntry(s, { title: draft.title, artist: draft.artist }));
   const seconds = parseLength(draft.length);
   const bpm = Number(draft.bpm);
   const problem = !draft.title.trim()
@@ -72,7 +72,7 @@ export default function LibraryScreen() {
   function createSong() {
     if (problem) return;
     const song = {
-      id: slug(draft.title, new Set(songs.map((s) => s.id))),
+      id: songSlug(draft.title, new Set(songs.map((s) => s.id))),
       title: draft.title.trim(),
       artist: draft.artist.trim() || BAND.name,
       key: draft.key,
@@ -94,14 +94,23 @@ export default function LibraryScreen() {
     notify(t('library.added', { title: song.title }), { songs });
   }
 
-  const keys = useMemo(() => ['all', ...Array.from(new Set(songs.map((s) => s.key)))], [songs]);
+  function removeSong(song) {
+    log.info('delete requested', { id: song.id, title: song.title, deletable: isDeletableSong(song) });
+    const snapshot = freezeUndo({ events, songs });
+    dispatch({ type: 'remove-from-library', songId: song.id });
+    notify(t('song.removed', { title: song.title }), snapshot);
+  }
+
+  /* The filter, the search and the badge all speak in the key the song is
+     heard in — a capo song is filed where the ear files it. */
+  const keys = useMemo(() => ['all', ...Array.from(new Set(songs.map(songKey)))], [songs]);
   const active = GROUPS.find((g) => g.id === group) || GROUPS[0];
 
   const q = query.trim().toLowerCase();
   const rows = songs
     .filter(active.test)
-    .filter((s) => key === 'all' || s.key === key)
-    .filter((s) => !q || `${s.title} ${s.artist} ${s.key}`.toLowerCase().includes(q));
+    .filter((s) => key === 'all' || songKey(s) === key)
+    .filter((s) => !q || `${s.title} ${s.artist} ${songKey(s)}`.toLowerCase().includes(q));
 
   const totalSec = songs.reduce((a, s) => a + s.sec, 0);
 
@@ -154,9 +163,17 @@ export default function LibraryScreen() {
                 />
               </div>
               <button
+                className="ghost lib-import-btn"
+                aria-expanded={importing}
+                onClick={() => { setCreating(false); setImporting(true); }}
+              >
+                <Icon name="globe" size={15} />
+                {t('import.button')}
+              </button>
+              <button
                 className="btn"
                 aria-expanded={creating}
-                onClick={() => { setDraft(BLANK); setCreating((v) => !v); }}
+                onClick={() => { setImporting(false); setDraft(BLANK); setCreating((v) => !v); }}
               >
                 <Icon name="plus" size={15} />
                 {t('library.newSong')}
@@ -203,25 +220,60 @@ export default function LibraryScreen() {
 
         <div className="scroll" style={{ padding: '6px 20px 30px' }}>
           {rows.map((s) => (
-            <button key={s.id} className="lib-row" onClick={() => navigate(`/song/${s.id}`)}>
-              <span className={'art' + (s.own ? ' own' : '')} style={hue(s.key)}>{s.key}</span>
+            <div key={s.id} className="lib-row">
+              <button
+                type="button"
+                className="lib-row-open"
+                onClick={() => navigate(`/song/${s.id}`)}
+              >
+                <SongArt song={s} />
 
-              <span className="grow" style={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'start' }}>
-                <span className="title-line">
-                  <span className="set-title truncate">{s.title}</span>
-                  {s.needsWork && <span className="tag tag-work">{t('common.needsWork')}</span>}
+                <span className="grow" style={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'start' }}>
+                  <span className="title-line">
+                    <span className="set-title truncate">{s.title}</span>
+                    {/* A capo belongs to the title, not to the small print: it
+                        changes what the guitarist has to do before the first
+                        chord, so it rides beside the name where the eye lands. */}
+                    {s.capo > 0 && (
+                      <span className="capo-mark" title={t('common.capoWith', { capo: s.capo })}>
+                        <Icon name="capo" size={11} />
+                        <span>{t('common.capoShort', { capo: s.capo })}</span>
+                      </span>
+                    )}
+                    {s.needsWork && <span className="tag tag-work">{t('common.needsWork')}</span>}
+                  </span>
+                  <span className="title-line" style={{ gap: 7 }}>
+                    <span className="set-artist truncate">{s.artist}</span>
+                    <span
+                      className="key-badge lib-key mono"
+                      style={hue(songKey(s))}
+                      title={s.capo ? t('common.capoWith', { capo: s.capo }) : undefined}
+                    >
+                      {songKey(s)}
+                    </span>
+                    {s.sections.length === 0 && <span className="tag tag-flat">{t('common.noChart')}</span>}
+                  </span>
                 </span>
-                <span className="title-line" style={{ gap: 7 }}>
-                  <span className="set-artist truncate">{s.artist}</span>
-                  {s.sections.length === 0 && <span className="tag tag-flat">{t('common.noChart')}</span>}
-                </span>
-              </span>
 
-              <span className="lib-tempo set-bpm">{s.bpm} <i>{t('common.bpm')}</i></span>
-              <span className="lib-time set-dur">{mmss(s.sec)}</span>
-              <span className="lib-last" style={{ fontSize: 12, color: 'var(--faint)' }}>{s.lastPlayed}</span>
-              <span className="go"><Icon name="arrow" size={13} /></span>
-            </button>
+                <span className="lib-tempo set-bpm">{s.bpm} <i>{t('common.bpm')}</i></span>
+                <span className="lib-time set-dur">{mmss(s.sec)}</span>
+                <span className="lib-last" style={{ fontSize: 12, color: 'var(--faint)' }}>{s.lastPlayed}</span>
+              </button>
+
+              <div className="lib-actions">
+                {isDeletableSong(s) && (
+                  <button
+                    type="button"
+                    className="icon-btn bordered lib-del"
+                    aria-label={t('library.remove', { title: s.title })}
+                    onClick={() => removeSong(s)}
+                  >
+                    <Icon name="trash" size={13} />
+                  </button>
+                )}
+                <span className="go" aria-hidden><Icon name="arrow" size={13} /></span>
+              </div>
+            </div>
           ))}
 
           {rows.length === 0 && !creating && (
@@ -244,6 +296,16 @@ export default function LibraryScreen() {
       </main>
 
       {creating && <div className="sheet-scrim" onClick={() => setCreating(false)} />}
+
+      <SongImportSheet
+        open={importing}
+        songs={songs}
+        onClose={() => setImporting(false)}
+        onImport={(song) => dispatch({ type: 'add-to-library', song })}
+        dispatch={dispatch}
+        notify={notify}
+        locale={locale}
+      />
 
       {creating && (
         <aside className="aside is-sheet slidein" style={{ width: 300, flex: '0 0 300px' }}>
