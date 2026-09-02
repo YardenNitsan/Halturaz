@@ -9,7 +9,8 @@ const log = createLogger('store');
 const TOAST_MS = 5000;
 const TOAST_UNDO_MS = 12000;
 import { DEFAULT_LOCALE } from './i18n/constants.js';
-import { applyDocumentLocale } from './i18n/translate.js';
+import { applyDocumentLocale, translate } from './i18n/translate.js';
+import { dbEnabled, loadAll, persist } from './lib/db.js';
 import { DEFAULT_THEME, applyDocumentTheme } from './theme.js';
 
 const KEY = 'static-bloom.v1';
@@ -24,11 +25,16 @@ const initial = (locale = DEFAULT_LOCALE, theme = DEFAULT_THEME) => ({
   theme
 });
 
+/* Where the rooms come from depends on whether there is a database: its table
+   already holds the three shipped ones, so concatenating them again would show
+   each twice. Without a database, state.rooms is only what the band added. */
+const allRooms = (rooms) => (dbEnabled ? rooms : ROOMS.concat(rooms));
+
 /** A room the band typed in. Trimmed, and only if it isn't already on the list. */
 const isNewRoom = (name, rooms) => {
   const v = String(name || '').trim();
   if (!v) return false;
-  return !ROOMS.concat(rooms).some((r) => r.toLowerCase() === v.toLowerCase());
+  return !allRooms(rooms).some((r) => r.toLowerCase() === v.toLowerCase());
 };
 
 /** Enough of a chart to draw without printing `undefined` over a lyric. */
@@ -63,6 +69,11 @@ function load(initialLocale) {
     const saved = JSON.parse(raw);
     const locale = initialLocale || (saved.locale === 'en' ? 'en' : DEFAULT_LOCALE);
     const theme = saved.theme === 'light' ? 'light' : DEFAULT_THEME;
+    /* With a database behind us the schedule and the library live there, and
+       localStorage is left holding only what belongs to this device. The
+       shipped demo content is what the first paint shows until `hydrate`
+       lands — and it is what the SSR smoke test renders. */
+    if (dbEnabled) return initial(locale, theme);
     // Charts stay code-owned; scheduling state and songs the band added are restored.
     const custom = (Array.isArray(saved.custom) ? saved.custom : [])
       .filter(isSong)
@@ -257,6 +268,15 @@ export function reducer(state, action) {
       return { ...state, events: nextEvents, songs: nextSongs };
     }
 
+    /** The database has answered; its rows replace the shipped demo content. */
+    case 'hydrate':
+      return {
+        ...state,
+        events: action.events,
+        songs: action.songs,
+        rooms: action.rooms
+      };
+
     case 'toast':
       return { ...state, toast: action.toast };
 
@@ -279,8 +299,52 @@ export function reducer(state, action) {
 }
 
 export function StoreProvider({ children, initialLocale }) {
-  const [state, dispatch] = useReducer(reducer, initialLocale, load);
+  const [state, rawDispatch] = useReducer(reducer, initialLocale, load);
   const timer = useRef(null);
+
+  /* The reducer stays the single source of truth for what the screens show;
+     the database is told afterwards. Keeping a ref to the state lets the
+     wrapper hand the writer the *result* of an action without waiting for a
+     render, so two taps in quick succession still persist in order. */
+  const stateRef = useRef(state);
+  const notifyRef = useRef(null);
+  const localeRef = useRef(state.locale);
+  localeRef.current = state.locale;
+
+  const dispatch = useCallback((action) => {
+    const next = reducer(stateRef.current, action);
+    const changed = next !== stateRef.current;
+    stateRef.current = next;
+    rawDispatch(action);
+    if (!changed) return;   // the reducer refused it; nothing to write
+    persist(action, next).then((saved) => {
+      if (!saved) notifyRef.current?.(translate(localeRef.current, 'common.saveFailed'));
+    });
+  }, []);
+
+  // One read on mount; after that this app is the only writer we expect.
+  useEffect(() => {
+    if (!dbEnabled) return;
+    let live = true;
+    loadAll()
+      .then((data) => {
+        if (!live) return;
+        log.info('hydrated from database', {
+          songs: data.songs.length,
+          events: Object.keys(data.events).length,
+          rooms: data.rooms.length
+        });
+        dispatch({ type: 'hydrate', ...data });
+      })
+      .catch((e) => {
+        if (!live) return;
+        log.warn('hydrate failed, staying on shipped content', { error: e.message });
+        notifyRef.current?.(translate(localeRef.current, 'common.loadFailed'));
+      });
+    return () => {
+      live = false;
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     applyDocumentLocale(state.locale);
@@ -300,14 +364,18 @@ export function StoreProvider({ children, initialLocale }) {
       }
       localStorage.setItem(
         KEY,
-        JSON.stringify({
-          events: state.events,
-          custom,
-          charts,
-          rooms: state.rooms,
-          locale: state.locale,
-          theme: state.theme
-        })
+        JSON.stringify(
+          dbEnabled
+            ? { locale: state.locale, theme: state.theme }
+            : {
+                events: state.events,
+                custom,
+                charts,
+                rooms: state.rooms,
+                locale: state.locale,
+                theme: state.theme
+              }
+        )
       );
       log.debug('persisted', {
         custom: custom.length,
@@ -354,6 +422,11 @@ export function StoreProvider({ children, initialLocale }) {
     toastRef.current = state.toast;
   }, [state.toast]);
 
+  // Lets the dispatch wrapper above report a failed write once `notify` exists.
+  useEffect(() => {
+    notifyRef.current = notify;
+  }, [notify]);
+
   return (
     <StoreCtx.Provider value={{ ...state, dispatch, notify, dismissToast, holdToast, releaseToast, today: TODAY }}>
       {children}
@@ -372,10 +445,10 @@ export function useSong(id) {
   return songs.find((s) => s.id === id) || null;
 }
 
-/** The three shipped rooms, then whatever the band added. */
+/** Every room the band can book, shipped and self-added alike. */
 export function useRooms() {
   const { rooms } = useStore();
-  return useMemo(() => ROOMS.concat(rooms), [rooms]);
+  return useMemo(() => allRooms(rooms), [rooms]);
 }
 
 /** Sorted [date, event] pairs. */

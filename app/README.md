@@ -1,14 +1,53 @@
 # Static Bloom — rehearsal manager
 
 A band's rehearsals, setlists and chord charts in one place.
-React + Vite, no backend — scheduling state persists to `localStorage`.
+React + Vite over Supabase — the schedule, the library and every chart live in
+Postgres. Without credentials the app still runs on the shipped demo content,
+which is what the SSR test renders against.
 
 ```bash
 npm install
+cp .env.example .env   # fill in the project URL and publishable key
 npm run dev      # http://127.0.0.1:5174
 npm run build    # production bundle into dist/
 npm test         # renders every route + checks the chord/date/reducer logic
+npm run db:test  # drives the real database through the running app
 ```
+
+## The database
+
+```bash
+npm run db:apply    # create/refresh the schema (idempotent)
+npm run db:seed     # load src/data.js into it; --force to replace what is there
+npm run db:backup   # dump every table to db/backups/
+npm run db:restore  # put a dump back, in one transaction
+npm run db:test     # 60 checks, driven through the running app
+```
+
+`db/schema.sql` is the whole story: six tables, plus a `replace_all` function
+that undo and "reset demo data" use so a full rewrite lands in one transaction
+rather than leaving the schedule torn for several seconds.
+
+`npm run db:test` is the real proof the wiring holds. It clicks the actual UI —
+booking, reordering, attendance, deleting, importing, undo, reset — and reads
+the rows back over the admin connection. It takes a full backup first and
+restores it at the end, so it is safe to run against a database holding real
+work, including the checks that deliberately wipe everything.
+
+Credentials are split by who is allowed to see them:
+
+| File | Holds | Reaches the browser |
+| --- | --- | --- |
+| `app/.env` | project URL, **publishable** key | yes — Vite inlines every `VITE_*` into the bundle |
+| `.env.admin` (repo root) | secret key, Postgres URL | never; read only by `db/*.mjs` |
+
+Both are gitignored. Nothing secret may ever be given a `VITE_` prefix.
+
+Scope today is one band with no sign-in, so the policies in `db/schema.sql`
+grant the anonymous role full access — meaning anyone who can reach the
+deployed URL can read and write everything. RLS is left *enabled* with explicit
+policies, so adding sign-in later is a matter of replacing `using (true)` with
+a membership check rather than rebuilding.
 
 ## The one path
 
@@ -27,15 +66,20 @@ a page of its own.
 
 ```
 src/
-  data.js               demo content (band, songs, charts, schedule)
-  store.jsx             one reducer + context; the schedule, any songs the band
-                        adds and any chart it re-aligns persist to localStorage
+  data.js               demo content (band, songs, charts, schedule) — the seed
+                        for the database, and the fallback when there is none
+  store.jsx             one reducer + context; the reducer stays the source of
+                        truth on screen and the database is written through
+                        after each action, so the UI never waits on the network
+  lib/db.js             the only file that knows Postgres exists: row ↔ screen
+                        shapes in one direction, one writer per action back
   lib/chords.js         transpose, including slash chords and flat spellings
   lib/chordEdit.js      a chart line as one lyric plus chords anchored to
                         characters of it — read, move, write back
   lib/dates.js          month grids, formatting, relative dates
   components/           Shell (nav), Icon, Toast
   screens/              Calendar, Rehearsal, Song, Library
+../db/                  schema.sql, and the admin scripts that apply and seed it
   styles.css            the design system — tokens, components, responsive rules
 ```
 

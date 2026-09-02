@@ -37,6 +37,8 @@ export default {
     hoursMin: '{h}ש׳ {m}דק׳'
   },
   common: {
+    loadFailed: 'לא הצלחנו להגיע לספרייה — מוצג המידע האחרון שידוע.',
+    saveFailed: 'לא הצלחנו לשמור — בדקו את החיבור.',
     show: 'הופעה',
     rehearsal: 'חזרה',
     cancel: 'ביטול',

@@ -5,6 +5,9 @@ smoke/dist/
 .DS_Store
 .env
 .env.*
+# ...but the templates carry no secrets and belong in the repo.
+!.env.example
+!.env.admin.example
 npm-debug.log*
 yarn-error.log*
 
@@ -13,3 +16,6 @@ rehearsal-manager.html
 
 # Generated smoke audit screenshots
 app/smoke/phone/
+
+# Database dumps taken before destructive test runs
+app/db/backups/

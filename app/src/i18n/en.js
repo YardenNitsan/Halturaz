@@ -37,6 +37,8 @@ export default {
     hoursMin: '{h}h {m}m'
   },
   common: {
+    loadFailed: 'Could not reach the band library — showing the last known set.',
+    saveFailed: 'Could not save that — check your connection.',
     show: 'Show',
     rehearsal: 'Rehearsal',
     cancel: 'Cancel',
