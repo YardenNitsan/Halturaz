@@ -29,7 +29,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # supabase-js wants a native WebSocket, which is Node 22 and up.
+          node-version: 22
           cache: npm
           cache-dependency-path: app/package-lock.json
 
