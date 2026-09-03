@@ -229,10 +229,33 @@ eq('mashina title', titleMatch('הכוכבים דולקים על אש קטנה',
 eq('mashina alias', textMatch('Mashina', 'משינה'), true);
 
 const { parseTab4uHtml } = await import('../server/tab4u.js');
-const mashinaHtml = await fetch(
-  'https://www.tab4u.com/tabs/songs/2055_%D7%9E%D7%A9%D7%99%D7%A0%D7%94_-_%D7%94%D7%9B%D7%95%D7%9B%D7%91%D7%99%D7%9D_%D7%93%D7%95%D7%9C%D7%A7%D7%99%D7%9D_%D7%A2%D7%9C_%D7%90%D7%A9_%D7%A7%D7%98%D7%A0%D7%94.html',
-  { headers: { 'User-Agent': 'Mozilla/5.0' } }
-).then((r) => r.text());
+
+/* The column maths below is checked against tab4u's own page and nothing else
+   — a saved copy would freeze the very thing under test, and the lyrics are
+   not ours to commit. So the page is fetched live, and when it cannot be
+   reached (a CI runner, a plane) these checks say so and stand down rather
+   than failing for a reason that has nothing to do with the code. */
+let skipped = 0;
+async function livePage(what, url) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } catch (e) {
+    skipped++;
+    console.log(`skip ${what} — tab4u unreachable (${e.message})`);
+    return null;
+  }
+}
+
+const mashinaHtml = await livePage(
+  'mashina chart',
+  'https://www.tab4u.com/tabs/songs/2055_%D7%9E%D7%A9%D7%99%D7%A0%D7%94_-_%D7%94%D7%9B%D7%95%D7%9B%D7%91%D7%99%D7%9D_%D7%93%D7%95%D7%9C%D7%A7%D7%99%D7%9D_%D7%A2%D7%9C_%D7%90%D7%A9_%D7%A7%D7%98%D7%A0%D7%94.html'
+);
+if (mashinaHtml) {
 const mashinaSections = parseTab4uHtml(mashinaHtml);
 eq('mashina single section', mashinaSections.length, 1);
 /* Tab4U prints no key of its own — the page only offers a "שנה טון" button. */
@@ -264,10 +287,11 @@ eq(
   mashinaSections[0].lines.some((l) => /במזומן/.test(lineText(l))),
   true
 );
+}
 
 /* An English chart on Tab4U is marked chords_en and set flush left. */
-const oasisHtml = await fetch('https://www.tab4u.com/tabs/songs/3396_Oasis_-_Wonderwall.html',
-  { headers: { 'User-Agent': 'Mozilla/5.0' } }).then((r) => r.text());
+const oasisHtml = await livePage('oasis chart', 'https://www.tab4u.com/tabs/songs/3396_Oasis_-_Wonderwall.html');
+if (oasisHtml) {
 const oasis = parseTab4uHtml(oasisHtml).flatMap((s) => s.lines);
 eq('oasis chart has chords', oasis.filter((l) => l.some((s) => s.c)).length > 20, true);
 eq(
@@ -276,6 +300,8 @@ eq(
     .filter((s) => s.c).map((s) => [s.c, (s.t || '').trim().split(/\s+/)[0]]),
   [['Em7', 'Today'], ['G', 'gonna']]
 );
+}
 
-console.log(fail ? `\n${fail} check(s) failed` : '\nall logic checks pass');
+const note = skipped ? ` (${skipped} live-page group${skipped > 1 ? 's' : ''} skipped)` : '';
+console.log(fail ? `\n${fail} check(s) failed` : `\nall logic checks pass${note}`);
 process.exit(fail ? 1 : 0);
