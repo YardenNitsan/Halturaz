@@ -2,8 +2,18 @@
 
 const isServer = typeof window === 'undefined';
 
+/* Deno's edge runtime is 'server' by this test but need not carry `process`,
+   so every read of it goes through here. */
+const envVar = (name) => {
+  try {
+    return process.env[name];
+  } catch {
+    return undefined;
+  }
+};
+
 function readConfig() {
-  if (isServer) return process.env.HALTURAZ_DEBUG || '';
+  if (isServer) return envVar('HALTURAZ_DEBUG') || '';
   try {
     return localStorage.getItem('halturaz.debug') || '';
   } catch {
@@ -12,7 +22,7 @@ function readConfig() {
 }
 
 function isDev() {
-  if (isServer) return process.env.NODE_ENV !== 'production';
+  if (isServer) return envVar('NODE_ENV') !== 'production';
   try {
     return !!import.meta.env?.DEV;
   } catch {

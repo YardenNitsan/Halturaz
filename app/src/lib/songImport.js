@@ -68,9 +68,18 @@ export async function searchSongs(query, { locale, limit = 8 } = {}) {
 /** @deprecated use searchSongs */
 export const searchItunes = searchSongs;
 
+/* Reading Tab4U needs a server: the site sends no CORS header, and the scrape
+   sets request headers page code is not allowed to set. In dev that server is
+   the Vite middleware; a built site has none of its own, so it asks the
+   Supabase Edge Function that runs the very same importer. */
+function chartEndpoint() {
+  const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
+  if (env.DEV || !env.VITE_SUPABASE_URL) return `${env.BASE_URL || '/'}api/songs/import`;
+  return `${env.VITE_SUPABASE_URL}/functions/v1/import`;
+}
+
 export async function importChart(title, artist) {
-  const base = import.meta.env?.BASE_URL || '/';
-  const url = `${base}api/songs/import?${new URLSearchParams({ title, artist: artist || '' })}`;
+  const url = `${chartEndpoint()}?${new URLSearchParams({ title, artist: artist || '' })}`;
   log.info('chart import request', { title, artist: artist || '(none)', url });
   const done = log.time('chart');
 

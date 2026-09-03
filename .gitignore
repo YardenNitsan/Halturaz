@@ -19,3 +19,9 @@ app/smoke/phone/
 
 # Database dumps taken before destructive test runs
 app/db/backups/
+
+# Generated Edge Function bundle; rebuild it with `npm run fn:build`.
+app/supabase/functions/import/index.ts
+
+# Scratch space the Supabase CLI writes next to the config.
+app/supabase/.temp/

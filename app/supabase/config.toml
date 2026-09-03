@@ -1,0 +1,7 @@
+# Only what the function deploy needs; the app's database is managed by
+# app/db/*.mjs, not by the CLI.
+
+# Anyone may ask for a chord chart — the answer is a public page either way,
+# and the browser holds no credential worth checking here.
+[functions.import]
+verify_jwt = false

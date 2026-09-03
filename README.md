@@ -44,10 +44,28 @@ local `npm run build` stays at `/`. Pages has no server for a deep link like
 `/Halturaz/songs`, so the build leaves a copy of `index.html` as `404.html` and
 the router picks the route up from there.
 
-Pages serves static files only: the song importer's chart fetch
-(`/api/songs/import`, which reads Tab4U) has no server to answer it there.
-Search still works — it goes straight to iTunes — but importing a chart is a
-`npm run dev` affair until that route lives somewhere else.
+### The chart importer
+
+Reading Tab4U needs a server: the site sends no `Access-Control-Allow-Origin`,
+and the scrape sets request headers page code is not allowed to set. In dev
+that server is Vite middleware (`app/server/handlers.js`); the published site
+has none of its own, so it asks a Supabase Edge Function running the very same
+`importChords`.
+
+```bash
+cd app
+npm run fn:build    # flattens server/ + src/lib into supabase/functions/import
+npm run fn:test     # runs that bundle against the live Tab4U and Ultimate Guitar
+npm run fn:deploy   # builds, then pushes it to the project
+```
+
+`fn:deploy` needs `SUPABASE_ACCESS_TOKEN` in `.env.admin` — a personal access
+token from https://supabase.com/dashboard/account/tokens. The secret key does
+not authorise deploys. The project ref is read off the URL the app already uses.
+
+The bundle is generated and gitignored; the scrapers stay in `app/server/`,
+sharing one chord parser and one Hebrew text matcher with the app. Song *search*
+never needed any of this — iTunes answers the browser directly.
 
 ## What's here
 
