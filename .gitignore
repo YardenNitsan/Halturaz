@@ -27,3 +27,6 @@ app/supabase/functions/import/index.ts
 
 # Scratch space the Supabase CLI writes next to the config.
 app/supabase/.temp/
+
+# Vercel CLI scratch
+.vercel/

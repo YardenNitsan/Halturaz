@@ -69,13 +69,21 @@ export async function searchSongs(query, { locale, limit = 8 } = {}) {
 export const searchItunes = searchSongs;
 
 /* Reading Tab4U needs a server: the site sends no CORS header, and the scrape
-   sets request headers page code is not allowed to set. In dev that server is
-   the Vite middleware; a built site has none of its own, so it asks the
-   Supabase Edge Function that runs the very same importer. */
+   sets request headers page code is not allowed to set. Which server answers
+   depends on where the app is running, and there are three answers:
+
+   - in dev, the Vite middleware, always;
+   - on a host that runs our code beside the site (Vercel), its own route —
+     VITE_CHART_API says so, and same-origin means no CORS to negotiate;
+   - on a host that only serves files (GitHub Pages), the Supabase Edge
+     Function, if one has been deployed. */
 function chartEndpoint() {
   const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
-  if (env.DEV || !env.VITE_SUPABASE_URL) return `${env.BASE_URL || '/'}api/songs/import`;
-  return `${env.VITE_SUPABASE_URL}/functions/v1/import`;
+  const local = `${env.BASE_URL || '/'}api/songs/import`;
+  if (env.DEV) return local;
+  if (env.VITE_CHART_API) return env.VITE_CHART_API;
+  if (env.VITE_SUPABASE_URL) return `${env.VITE_SUPABASE_URL}/functions/v1/import`;
+  return local;
 }
 
 export async function importChart(title, artist) {

@@ -44,6 +44,20 @@ local `npm run build` stays at `/`. Pages has no server for a deep link like
 `/Halturaz/songs`, so the build leaves a copy of `index.html` as `404.html` and
 the router picks the route up from there.
 
+### Or Vercel, which runs the code too
+
+`app/vercel.json` and `app/api/songs/import.js` are the whole of it. Import the
+repo at https://vercel.com/new, set **Root Directory** to `app`, and that is
+the configuration — the site is served from `/`, so no `BASE_PATH`; the SPA
+rewrite replaces the `404.html` trick; and `api/songs/import.js` re-exports the
+same `handleRequest`, on the same origin, so the chart importer works from a
+phone with no Edge Function and no access token in sight.
+
+Both hosts can run at once — they publish from the same branch and do not know
+about each other. What tells the app which server to ask is `VITE_CHART_API`,
+set by `vercel.json` at build time and absent everywhere else; see
+`chartEndpoint()` in `app/src/lib/songImport.js` for all three cases.
+
 ### The chart importer (optional)
 
 Adding a song works on the published site — the library's "new song" form needs
