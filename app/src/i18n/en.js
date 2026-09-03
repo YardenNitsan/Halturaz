@@ -37,6 +37,7 @@ export default {
     hoursMin: '{h}h {m}m'
   },
   common: {
+    tuning: 'Tuning up…',
     loadFailed: 'Could not reach the band library — showing the last known set.',
     saveFailed: 'Could not save that — check your connection.',
     show: 'Show',

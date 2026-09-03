@@ -2,12 +2,16 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Shell } from './components/Shell.jsx';
 import { Toast } from './components/Toast.jsx';
+import { BootLoader } from './components/Loader.jsx';
+import { useStore } from './store.jsx';
 import CalendarScreen from './screens/CalendarScreen.jsx';
 import RehearsalScreen from './screens/RehearsalScreen.jsx';
 import SongScreen from './screens/SongScreen.jsx';
 import LibraryScreen from './screens/LibraryScreen.jsx';
 
 export default function App() {
+  const { hydrating } = useStore();
+
   return (
     <>
       <Shell>
@@ -20,6 +24,7 @@ export default function App() {
         </Routes>
       </Shell>
       <Toast />
+      {hydrating && <BootLoader />}
     </>
   );
 }

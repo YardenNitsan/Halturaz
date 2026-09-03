@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Icon } from './Icon.jsx';
+import { Loader } from './Loader.jsx';
 import { useI18n } from '../i18n/index.js';
 import { mmss } from '../lib/dates.js';
 import { searchSongs, importChart, artworkAt } from '../lib/songImport.js';
@@ -142,7 +143,12 @@ export function SongImportSheet({ open, songs, onClose, onImport, dispatch, noti
           />
         </div>
 
-        {loading && <p className="import-status">{t('import.searching')}</p>}
+        {loading && (
+          <p className="import-status">
+            <Loader size={16} />
+            {t('import.searching')}
+          </p>
+        )}
 
         <div className="import-results">
           {results.map((hit) => {
@@ -169,7 +175,10 @@ export function SongImportSheet({ open, songs, onClose, onImport, dispatch, noti
                     {hit.album ? ` · ${hit.album}` : ''}
                   </span>
                 </span>
-                <span className="import-hit-action">{busy ? t('import.fetching') : t('import.add')}</span>
+                <span className="import-hit-action">
+                  {busy ? <Loader size={13} /> : null}
+                  {busy ? t('import.fetching') : t('import.add')}
+                </span>
               </button>
             );
           })}

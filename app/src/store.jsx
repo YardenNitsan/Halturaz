@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { EVENTS, SONGS, TODAY, ROOMS } from './data.js';
 import { isDeletableSong } from './lib/songs.js';
 import { freezeUndo } from './lib/undo.js';
@@ -301,6 +301,9 @@ export function reducer(state, action) {
 export function StoreProvider({ children, initialLocale }) {
   const [state, rawDispatch] = useReducer(reducer, initialLocale, load);
   const timer = useRef(null);
+  /* Kept out of the reducer on purpose: this is the state of one read on
+     mount, not of the band's material, and `reset` must not raise it again. */
+  const [hydrating, setHydrating] = useState(dbEnabled);
 
   /* The reducer stays the single source of truth for what the screens show;
      the database is told afterwards. Keeping a ref to the state lets the
@@ -335,10 +338,12 @@ export function StoreProvider({ children, initialLocale }) {
           rooms: data.rooms.length
         });
         dispatch({ type: 'hydrate', ...data });
+        setHydrating(false);
       })
       .catch((e) => {
         if (!live) return;
         log.warn('hydrate failed, staying on shipped content', { error: e.message });
+        setHydrating(false);
         notifyRef.current?.(translate(localeRef.current, 'common.loadFailed'));
       });
     return () => {
@@ -428,7 +433,7 @@ export function StoreProvider({ children, initialLocale }) {
   }, [notify]);
 
   return (
-    <StoreCtx.Provider value={{ ...state, dispatch, notify, dismissToast, holdToast, releaseToast, today: TODAY }}>
+    <StoreCtx.Provider value={{ ...state, hydrating, dispatch, notify, dismissToast, holdToast, releaseToast, today: TODAY }}>
       {children}
     </StoreCtx.Provider>
   );
