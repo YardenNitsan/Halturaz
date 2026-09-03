@@ -27,6 +27,28 @@ to the shipped demo content, so it still runs and still tests. The rail's
 See `app/README.md` for the schema, and for which credential is allowed where —
 the publishable key ships in the browser bundle, the secret key never does.
 
+## Deploy
+
+Every push to `yaliby` builds `app/` and publishes it to GitHub Pages —
+https://yardennitsan.github.io/Halturaz/ — via `.github/workflows/pages.yml`.
+Two things have to be set once in the repository settings:
+
+- **Settings → Pages → Source: GitHub Actions.**
+- **Settings → Secrets and variables → Actions:** `VITE_SUPABASE_URL` and
+  `VITE_SUPABASE_PUBLISHABLE_KEY`. Both are client-safe and end up inside the
+  bundle; without them the published site simply shows the demo content.
+
+The site is served from a sub-path, so the workflow builds with
+`BASE_PATH=/Halturaz/` and the router reads that prefix off `BASE_URL`. A plain
+local `npm run build` stays at `/`. Pages has no server for a deep link like
+`/Halturaz/songs`, so the build leaves a copy of `index.html` as `404.html` and
+the router picks the route up from there.
+
+Pages serves static files only: the song importer's chart fetch
+(`/api/songs/import`, which reads Tab4U) has no server to answer it there.
+Search still works — it goes straight to iTunes — but importing a chart is a
+`npm run dev` affair until that route lives somewhere else.
+
 ## What's here
 
 ```

@@ -69,7 +69,8 @@ export async function searchSongs(query, { locale, limit = 8 } = {}) {
 export const searchItunes = searchSongs;
 
 export async function importChart(title, artist) {
-  const url = `/api/songs/import?${new URLSearchParams({ title, artist: artist || '' })}`;
+  const base = import.meta.env?.BASE_URL || '/';
+  const url = `${base}api/songs/import?${new URLSearchParams({ title, artist: artist || '' })}`;
   log.info('chart import request', { title, artist: artist || '(none)', url });
   const done = log.time('chart');
 

@@ -7,7 +7,9 @@ import './styles.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    {/* Vite's BASE_URL is '/' in dev and '/Halturaz/' on GitHub Pages;
+        the router has to drop that prefix before it reads a route. */}
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <StoreProvider>
         <App />
       </StoreProvider>
