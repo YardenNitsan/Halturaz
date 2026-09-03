@@ -320,17 +320,27 @@ try {
     await hits[0].click();
     await page.waitForTimeout(9000);
     const rows = await q(
-      'select id, title, custom, import_source, jsonb_array_length(sections) secs from songs');
+      `select id, title, custom, import_source, artwork, last_played,
+              jsonb_array_length(sections) secs from songs`);
     imported = rows.find((r) => !idsBefore.includes(r.id));
     check('the imported song reaches Postgres', !!imported, imported?.title || 'nothing new');
     if (imported) {
       check('it is marked as the band\'s own addition', imported.custom === true);
       check('it carries a chart', imported.secs > 0, `${imported.secs} sections`);
       check('it records where it came from', !!imported.import_source, imported.import_source);
+      /* The cover is the half of the import that has no other home: it comes
+         from iTunes, not from the chart, so nothing else would notice it
+         going missing. Checking only the title let it vanish for a while. */
+      check('it stores the album cover', !!imported.artwork, imported.artwork || 'none');
       await page.evaluate(() => localStorage.clear());
       await go('/songs');
       check('the import survives a reload',
             (await page.textContent('body')).includes(imported.title));
+      if (imported.artwork) {
+        check('the cover survives a reload too', !!(await page.$('.art-cover img')));
+      }
+      check('a song never played reads as such, not as a blank',
+            (await page.textContent('.lib-last')).trim().length > 0);
     }
   }
 
@@ -423,6 +433,12 @@ try {
         JSON.stringify(afterReset));
   check('reset drops songs the band had added',
         (await q(`select id from songs where id = 'probe-reset'`)).length === 0);
+  /* The demo carries its play dates as labels ('Aug 29'); the database wants
+     real days. When the two disagreed, a reset quietly nulled the whole
+     column and the library's last column went blank for every song. */
+  check('reset keeps the play dates it shipped with',
+        (await q('select id from songs where last_played is not null')).length === 14,
+        `${(await q('select id from songs where last_played is not null')).length} of 14 dated`);
   await page.evaluate(() => localStorage.clear());
   await go('/songs');
   body = await page.textContent('body');

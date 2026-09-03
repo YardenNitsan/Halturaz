@@ -51,6 +51,22 @@ export function shortDate(s, locale = DEFAULT_LOCALE) {
   return `${pack(locale).monthsShort[m]} ${d}`;
 }
 
+/* The demo content writes its play dates as English labels ('Aug 29'), which
+   is what the library column shows. Postgres needs a real calendar day, and
+   both the seeder and the store's reset have to agree on which one — so the
+   conversion lives here rather than being written out twice. */
+const SHORT_MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
+                       Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+
+/** 'Aug 29' -> '2026-08-29', taking the year from `today`. */
+export function shortDateToISO(label, today) {
+  const m = String(label || '').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
+  if (!m) return null;
+  const month = SHORT_MONTHS[m[1]];
+  if (!month) return null;
+  return iso(Number(String(today).slice(0, 4)), month - 1, Number(m[2]));
+}
+
 export function dowLabels(locale = DEFAULT_LOCALE) {
   const d = pack(locale);
   return { full: d.dow, short: d.dowShort };

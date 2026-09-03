@@ -5,20 +5,6 @@ import { BAND, SONGS, EVENTS, ROOMS, TODAY } from '../src/data.js';
 import { withDb } from './client.mjs';
 
 const force = process.argv.includes('--force');
-const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
-                 Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-
-/** 'Aug 29' -> '2026-08-29', anchored to the demo's today. */
-function lastPlayedDate(label) {
-  if (!label) return null;
-  const m = label.match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
-  if (!m) return null;
-  const year = Number(TODAY.slice(0, 4));
-  const month = MONTHS[m[1]];
-  if (!month) return null;
-  return `${year}-${String(month).padStart(2, '0')}-${String(Number(m[2])).padStart(2, '0')}`;
-}
-
 /** '2 days ago' -> an absolute timestamp, counted back from the demo's today. */
 function noteTimestamp(age) {
   if (!age) return null;
@@ -63,13 +49,13 @@ await withDb(async (db) => {
     for (const s of SONGS) {
       await db.query(
         `insert into songs (id, title, artist, key, bpm, sec, capo, time_sig, own,
-                            needs_work, custom, sections, note, note_by, note_at,
-                            last_played, import_source)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+                            needs_work, custom, sections, artwork, note, note_by,
+                            note_at, last_played, import_source)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
         [s.id, s.title, s.artist, s.key, s.bpm, s.sec, s.capo ?? 0, s.timeSig || '4/4',
          !!s.own, !!s.needsWork, !!s.custom, JSON.stringify(s.sections || []),
-         s.note ?? null, s.noteBy ?? null, noteTimestamp(s.noteAge),
-         lastPlayedDate(s.lastPlayed), s.importSource ?? null]
+         s.artwork ?? null, s.note ?? null, s.noteBy ?? null, noteTimestamp(s.noteAge),
+         s.lastPlayedISO ?? null, s.importSource ?? null]
       );
     }
     for (const [date, ev] of Object.entries(EVENTS)) {

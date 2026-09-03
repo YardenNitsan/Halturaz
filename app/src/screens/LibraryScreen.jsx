@@ -249,7 +249,7 @@ export default function LibraryScreen() {
 
                 <span className="lib-tempo set-bpm">{s.bpm} <i>{t('common.bpm')}</i></span>
                 <span className="lib-time set-dur">{mmss(s.sec)}</span>
-                <span className="lib-last" style={{ fontSize: 12, color: 'var(--faint)' }}>{s.lastPlayed}</span>
+                <span className="lib-last" style={{ fontSize: 12, color: 'var(--faint)' }}>{s.lastPlayed || t('common.never')}</span>
               </button>
 
               <div className="lib-actions">

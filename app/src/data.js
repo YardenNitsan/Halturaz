@@ -1,6 +1,8 @@
 // Demo content for a five-piece called Static Bloom.
 // Covers carry real title/artist metadata; every full lyric sheet is an original.
 
+import { shortDateToISO } from './lib/dates.js';
+
 export const TODAY = '2026-08-29';
 
 export const BAND = {
@@ -142,7 +144,7 @@ const northbound = [
   }
 ];
 
-export const SONGS = [
+const DEMO_SONGS = [
   { id: 'copper-line', title: 'Copper Line', artist: 'Static Bloom', key: 'D', bpm: 96, sec: 252, capo: 2, timeSig: '4/4', own: true, sections: copperLine, note: 'Second chorus drops the kick — Dana carries it alone until the last two bars. Ori: keep the capo on, the open strings are the whole point.', noteBy: 'ori', noteAge: '2 days ago', lastPlayed: 'Aug 29' },
   { id: 'half-past-nowhere', title: 'Half Past Nowhere', artist: 'Static Bloom', key: 'Am', bpm: 84, sec: 324, capo: 0, timeSig: '4/4', own: true, sections: halfPastNowhere, note: 'Start on the ride, no count-in. Maya comes in a bar late on purpose.', noteBy: 'maya', noteAge: '1 week ago', lastPlayed: 'Aug 29' },
   { id: 'room-12', title: 'Room 12', artist: 'Static Bloom', key: 'F#m', bpm: 112, sec: 228, capo: 0, timeSig: '4/4', own: true, sections: [], needsWork: true, lastPlayed: 'Aug 22' },
@@ -160,6 +162,14 @@ export const SONGS = [
 ];
 
 const set8 = ['copper-line','half-past-nowhere','room-12','dreams','ember-and-ash','northbound','seven-nation-army','static-bloom'];
+
+/* The label is what the library column prints; the ISO day is what the
+   database stores. Deriving one from the other here means a reset writes real
+   dates back instead of nulling the whole column out. */
+export const SONGS = DEMO_SONGS.map((s) => {
+  const lastPlayedISO = shortDateToISO(s.lastPlayed, TODAY);
+  return lastPlayedISO ? { ...s, lastPlayedISO } : s;
+});
 
 export const EVENTS = {
   '2026-07-21': { kind: 'r', time: '20:00', place: 'Studio 9', songs: set8.slice(0, 7), done: [] },
