@@ -39,12 +39,10 @@ jobs:
 
       - name: Build
         env:
-          # The site lives under https://<user>.github.io/Halturaz/.
+          # The site lives under https://<user>.github.io/Halturaz/. The
+          # Supabase settings come from app/.env.production, in the repo, so
+          # this build needs nothing configured anywhere.
           BASE_PATH: /Halturaz/
-          # Client-safe values only — they end up inside the bundle. Without
-          # them the app still builds and falls back to the demo content.
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
       - uses: actions/upload-pages-artifact@v3

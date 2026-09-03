@@ -31,12 +31,12 @@ the publishable key ships in the browser bundle, the secret key never does.
 
 Every push to `yaliby` builds `app/` and publishes it to GitHub Pages —
 https://yardennitsan.github.io/Halturaz/ — via `.github/workflows/pages.yml`.
-Two things have to be set once in the repository settings:
+One switch turns it on, once: **Settings → Pages → Source: GitHub Actions.**
 
-- **Settings → Pages → Source: GitHub Actions.**
-- **Settings → Secrets and variables → Actions:** `VITE_SUPABASE_URL` and
-  `VITE_SUPABASE_PUBLISHABLE_KEY`. Both are client-safe and end up inside the
-  bundle; without them the published site simply shows the demo content.
+Nothing else is configured. The build's Supabase settings sit in
+`app/.env.production`, in the repo, because Vite bakes them into the JS every
+visitor downloads either way — see that file's header for the line between
+those and the credentials in `.env.admin`.
 
 The site is served from a sub-path, so the workflow builds with
 `BASE_PATH=/Halturaz/` and the router reads that prefix off `BASE_URL`. A plain
@@ -44,13 +44,18 @@ local `npm run build` stays at `/`. Pages has no server for a deep link like
 `/Halturaz/songs`, so the build leaves a copy of `index.html` as `404.html` and
 the router picks the route up from there.
 
-### The chart importer
+### The chart importer (optional)
 
-Reading Tab4U needs a server: the site sends no `Access-Control-Allow-Origin`,
-and the scrape sets request headers page code is not allowed to set. In dev
-that server is Vite middleware (`app/server/handlers.js`); the published site
-has none of its own, so it asks a Supabase Edge Function running the very same
-`importChords`.
+Adding a song works on the published site — the library's "new song" form needs
+no server. Pulling a chart down off Tab4U does: the site sends no
+`Access-Control-Allow-Origin`, and the scrape sets request headers page code is
+not allowed to set. In dev that server is Vite middleware
+(`app/server/handlers.js`), which is enough on its own — importing is an
+authoring move, and a song imported from a laptop is in Postgres and on
+everyone's screen a second later.
+
+If you would rather import from a phone too, the same `importChords` deploys as
+a Supabase Edge Function:
 
 ```bash
 cd app
@@ -62,6 +67,8 @@ npm run fn:deploy   # builds, then pushes it to the project
 `fn:deploy` needs `SUPABASE_ACCESS_TOKEN` in `.env.admin` — a personal access
 token from https://supabase.com/dashboard/account/tokens. The secret key does
 not authorise deploys. The project ref is read off the URL the app already uses.
+Until it is deployed the built site's import button simply reports a failure;
+nothing else waits on it.
 
 The bundle is generated and gitignored; the scrapers stay in `app/server/`,
 sharing one chord parser and one Hebrew text matcher with the app. Song *search*

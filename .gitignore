@@ -8,6 +8,8 @@ smoke/dist/
 # ...but the templates carry no secrets and belong in the repo.
 !.env.example
 !.env.admin.example
+# The published build's client-side settings; see the file's own header.
+!.env.production
 npm-debug.log*
 yarn-error.log*
 
